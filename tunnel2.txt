@@ -1,0 +1,16 @@
+﻿[35mΓùÉ[39m Starting cloudflared tunnel to http://localhost:3000
+
+≡ƒöÑ Your installation of cloudflared software constitutes a symbol of your signature
+   indicating that you accept the terms of the Cloudflare License, Terms and Privacy Policy.
+
+Γ¥» License:         [36mhttps://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/license/[39m
+Γ¥» Terms:           [36mhttps://www.cloudflare.com/terms/[39m
+Γ¥» Privacy Policy:  [36mhttps://www.cloudflare.com/privacypolicy/[39m
+
+[?25l[90m[39m
+[36mΓ¥»[39m Do you agree with the above terms and wish to install the binary from GitHub?
+[36m[39m[32mΓùÅ[39m Yes [2m/[22m [2mΓùï[22m [2mNo[22m
+[36m[39m
+[999D[4A[1B[J[32mΓ£ö[39m Do you agree with the above terms and wish to install the binary from GitHub?
+[90m[39m[2mYes[22m
+[?25h[36mΓä╣[39m Waiting for tunnel URL...

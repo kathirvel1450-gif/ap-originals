@@ -1,0 +1,28 @@
+﻿ssh : Warning: 
+Permanently added 
+'serveo.net' (RSA) to the 
+list of known hosts.
+At line:1 char:1
++ ssh -o 
+StrictHostKeyChecking=no 
+-R 80:localhost:3000 
+serveo.net *>&1  ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
+    + CategoryInfo        
+      : NotSpecified: (W  
+  arning: Perman...of k   
+ nown hosts.:String) [    
+], RemoteException
+    + FullyQualifiedError 
+   Id : NativeCommandErr  
+  or
+ 
+[32mForwarding HTTP traffic from https://6f4046683f94d244-36-255-19-64.serveousercontent.com
+[0m[33mTip (1): Create an account to reserve names. Pro removes the warning page: https://console.serveo.net/settings?n=1&src=ssh_nudge&v=B
+[0m
+Connection to serveo.net 
+closed by remote host.
+Connection to serveo.net 
+closed.
