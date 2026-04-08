@@ -42,7 +42,7 @@ export default function Home() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="text-5xl md:text-7xl font-heading font-extrabold text-[#fdfbf7] leading-tight mb-6 drop-shadow-md"
+              className="text-5xl md:text-7xl font-heading font-black text-[#ffffff] leading-tight mb-6 drop-shadow-lg"
             >
               Nourish Your Body with <span className="text-accent-400 drop-shadow-xl">Nature's Best.</span>
             </motion.h1>
@@ -51,7 +51,7 @@ export default function Home() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="text-lg md:text-xl text-[#f3f4f6] mb-10 leading-relaxed font-normal shadow-black drop-shadow"
+              className="text-lg md:text-xl text-white mb-10 leading-relaxed font-medium shadow-black drop-shadow-md"
             >
               Experience the authentic taste and health benefits of cold-pressed oils, pure forest honey, and naturally grown groceries.
             </motion.p>
@@ -100,8 +100,8 @@ export default function Home() {
       <section className="py-16 md:py-24 bg-white dark:bg-[#0a0a0a]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-2xl mx-auto mb-16">
-            <h2 className="text-3xl md:text-4xl font-heading font-bold text-earth-900 dark:text-white mb-4">Our Best Sellers</h2>
-            <p className="text-earth-600 dark:text-earth-400 font-medium">Discover our most loved products, trusted by thousands of families for their daily wellness.</p>
+            <h2 className="text-3xl md:text-4xl font-heading font-extrabold text-[#111] dark:text-white mb-4">Our Best Sellers</h2>
+            <p className="text-[#111] dark:text-white font-medium text-lg">Discover our most loved products, trusted by thousands of families for their daily wellness.</p>
           </div>
           
           {isLoadingData ? (

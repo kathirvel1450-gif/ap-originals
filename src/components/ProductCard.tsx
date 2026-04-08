@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Product } from '@/lib/data';
@@ -12,6 +12,7 @@ import { motion } from 'framer-motion';
 export default function ProductCard({ product }: { product: Product }) {
   const { addToCart, toggleWishlist, wishlist } = useStore();
   const { addToast } = useToast();
+  const [imgSrc, setImgSrc] = useState(product.image);
   
   const isWishlisted = wishlist.includes(product.id);
 
@@ -49,7 +50,7 @@ export default function ProductCard({ product }: { product: Product }) {
       {/* Wishlist Button */}
       <button 
         onClick={handleWishlist}
-        className="absolute top-3 right-3 z-20 p-2.5 rounded-full bg-white/90 backdrop-blur-sm text-gray-400 hover:text-red-500 hover:scale-110 transition-all duration-300 shadow-sm"
+        className="absolute top-3 right-3 z-20 p-2.5 rounded-full bg-white/90 backdrop-blur-sm text-[#555] hover:text-red-500 hover:scale-110 transition-all duration-300 shadow-sm"
       >
         <Heart className={`w-[18px] h-[18px] ${isWishlisted ? 'fill-red-500 text-red-500' : ''}`} />
       </button>
@@ -61,7 +62,8 @@ export default function ProductCard({ product }: { product: Product }) {
           <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent z-10 transition-opacity duration-300 opacity-50 group-hover:opacity-20 pointer-events-none"></div>
           
           <img
-            src={product.image}
+            src={imgSrc}
+            onError={() => setImgSrc('/images/fallback.svg')}
             alt={product.name}
             className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-in-out"
           />
@@ -74,7 +76,7 @@ export default function ProductCard({ product }: { product: Product }) {
             {product.category}
           </span>
           
-          <h3 className="font-heading font-bold text-gray-900 text-lg md:text-[1.15rem] leading-tight mb-2 line-clamp-2">
+          <h3 className="font-heading font-extrabold text-[#111] text-lg md:text-[1.15rem] leading-tight mb-2 line-clamp-2">
             {product.name}
           </h3>
           
@@ -84,7 +86,7 @@ export default function ProductCard({ product }: { product: Product }) {
                 ₹{finalPrice}
               </span>
               {product.discountPercentage && (
-                <span className="text-sm font-semibold text-gray-400 line-through mt-0.5">
+                <span className="text-sm font-semibold text-[#555] line-through mt-0.5">
                   ₹{product.price}
                 </span>
               )}

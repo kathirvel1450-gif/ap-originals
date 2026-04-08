@@ -17,11 +17,11 @@ export type Product = {
 };
 
 export const categories: Category[] = [
-  { id: '1', name: 'Oils', image: 'https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?auto=format&fit=crop&q=80&w=200' },
-  { id: '2', name: 'Flours', image: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&q=80&w=200' },
-  { id: '3', name: 'Dals', image: 'https://images.unsplash.com/photo-1615486171545-21d96b997cb6?auto=format&fit=crop&q=80&w=200' },
-  { id: '4', name: 'Honey', image: 'https://images.unsplash.com/photo-1587049352847-8d4c0b4c8109?auto=format&fit=crop&q=80&w=200' },
-  { id: '5', name: 'Rice', image: 'https://images.unsplash.com/photo-1586201375761-83865001e8ac?auto=format&fit=crop&q=80&w=200' },
+  { id: '1', name: 'Oils', image: '/images/categories/oils.jpg' },
+  { id: '2', name: 'Flours', image: '/images/categories/flours.jpg' },
+  { id: '3', name: 'Dals', image: '/images/categories/dals.jpg' },
+  { id: '4', name: 'Honey', image: '/images/categories/honey.jpg' },
+  { id: '5', name: 'Rice', image: '/images/categories/rice.jpg' },
 ];
 
 export const seedProducts: Product[] = [
@@ -33,7 +33,7 @@ export const seedProducts: Product[] = [
     stockStatus: 'In Stock',
     category: 'Oils',
     rating: 4.9,
-    image: 'https://images.unsplash.com/photo-1601001831826-613d29a50275?auto=format&fit=crop&q=80&w=600',
+    image: '/images/products/pure-cow-ghee.jpg',
     description: 'Authentic pure cow ghee made completely from A2 milk using the traditional bilona method.'
   },
   {
@@ -44,7 +44,7 @@ export const seedProducts: Product[] = [
     stockStatus: 'In Stock',
     category: 'Oils',
     rating: 4.8,
-    image: 'https://images.unsplash.com/photo-1555137279-d10af381d604?auto=format&fit=crop&q=80&w=600',
+    image: '/images/products/groundnut-oil.jpg',
     description: '100% natural, cold-pressed groundnut oil retaining all essential nutrients, perfect for healthy cooking.'
   },
   {
@@ -54,7 +54,7 @@ export const seedProducts: Product[] = [
     stockStatus: 'In Stock',
     category: 'Oils',
     rating: 4.7,
-    image: 'https://images.unsplash.com/photo-1611078440078-deba5136ff93?auto=format&fit=crop&q=80&w=600',
+    image: '/images/products/coconut-oil.jpg',
     description: 'Premium quality cold-pressed coconut oil, naturally extracted, unrefined, and perfect for diet and hair care.'
   },
   {
@@ -65,7 +65,7 @@ export const seedProducts: Product[] = [
     stockStatus: 'In Stock',
     category: 'Flours',
     rating: 4.9,
-    image: 'https://images.unsplash.com/photo-1615486171449-014ea487ea0b?auto=format&fit=crop&q=80&w=600',
+    image: '/images/products/turmeric-powder.jpg',
     description: 'Bright, pure, and aromatic organic turmeric powder containing high curcumin.'
   },
   {
@@ -76,7 +76,7 @@ export const seedProducts: Product[] = [
     stockStatus: 'Low Stock',
     category: 'Honey',
     rating: 5.0,
-    image: 'https://images.unsplash.com/photo-1587049352847-8d4c0b4c8109?auto=format&fit=crop&q=80&w=600',
+    image: '/images/products/forest-honey.jpg',
     description: 'Raw, unpasteurized natural honey collected from deep forest beehives. No added sugars.'
   },
   {
@@ -86,7 +86,7 @@ export const seedProducts: Product[] = [
     stockStatus: 'In Stock',
     category: 'Rice',
     rating: 4.6,
-    image: 'https://images.unsplash.com/photo-1586201375761-83865001e8ac?auto=format&fit=crop&q=80&w=600',
+    image: '/images/products/brown-basmati-rice.jpg',
     description: 'Premium quality long-grain brown basmati rice rich in fiber and flavor.'
   },
   {
@@ -96,7 +96,7 @@ export const seedProducts: Product[] = [
     stockStatus: 'In Stock',
     category: 'Dals',
     rating: 4.3,
-    image: 'https://images.unsplash.com/photo-1615486171545-21d96b997cb6?auto=format&fit=crop&q=80&w=600',
+    image: '/images/products/whole-urad-dal.jpg',
     description: 'Unpolished whole urad dal retained with maximum protein and nutrition.'
   },
   {
@@ -106,7 +106,7 @@ export const seedProducts: Product[] = [
     stockStatus: 'In Stock',
     category: 'Flours',
     rating: 4.5,
-    image: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&q=80&w=600',
+    image: '/images/products/whole-wheat-flour.jpg',
     description: 'Freshly milled whole wheat chakki atta, making softer and healthier rotis.'
   }
 ];

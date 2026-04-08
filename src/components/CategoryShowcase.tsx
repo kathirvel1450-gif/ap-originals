@@ -26,8 +26,8 @@ export default function CategoryShowcase() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-end justify-between mb-8">
           <div>
-            <h2 className="text-3xl font-heading font-bold text-earth-900 dark:text-white">Shop by Category</h2>
-            <p className="text-earth-500 mt-2">Explore our pure, organic collections</p>
+            <h2 className="text-3xl font-heading font-extrabold text-[#111] dark:text-white">Shop by Category</h2>
+            <p className="text-[#111] dark:text-white font-medium mt-2">Explore our pure, organic collections</p>
           </div>
           <div className="hidden sm:flex gap-2">
             <button onClick={scrollLeft} className="p-2 rounded-full border border-earth-200 dark:border-earth-800 text-earth-600 dark:text-gray-300 hover:bg-earth-100 dark:hover:bg-earth-800 transition-colors">
@@ -55,11 +55,12 @@ export default function CategoryShowcase() {
                   <div className="aspect-square rounded-full overflow-hidden mb-4 border-4 border-white dark:border-earth-800 shadow-md">
                     <img 
                       src={category.image} 
+                      onError={(e) => { e.currentTarget.src = '/images/fallback.svg'; }}
                       alt={category.name} 
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
                     />
                   </div>
-                  <h3 className="text-center font-medium text-earth-800 dark:text-gray-200 group-hover:text-primary-600 transition-colors">
+                  <h3 className="text-center font-extrabold text-[#111] dark:text-white group-hover:text-primary-600 transition-colors">
                     {category.name}
                   </h3>
                 </Link>

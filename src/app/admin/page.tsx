@@ -137,7 +137,7 @@ export default function AdminPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-earth-50 dark:bg-earth-800/50 border-b border-earth-200 dark:border-earth-800 text-earth-500 dark:text-earth-400 text-sm font-semibold uppercase tracking-wider">
+            <tr className="bg-earth-50 dark:bg-earth-800/50 border-b border-earth-200 dark:border-earth-800 text-[#111] dark:text-white text-sm font-semibold uppercase tracking-wider">
                 <th className="p-4">Product</th>
                 <th className="p-4">Category</th>
                 <th className="p-4 hidden md:table-cell">Price / Offer</th>

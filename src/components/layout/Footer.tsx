@@ -74,7 +74,7 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="pt-8 border-t border-[#333] text-center md:text-left md:flex justify-between items-center text-gray-100 font-medium text-sm">
+        <div className="pt-8 border-t border-[#333] text-center md:text-left md:flex justify-between items-center text-white font-medium text-sm">
           <p>&copy; {new Date().getFullYear()} AP originals. All rights reserved.</p>
           <div className="flex justify-center gap-6 mt-4 md:mt-0">
             <Link href="#" className="hover:text-accent-400 transition-colors">Privacy Policy</Link>
