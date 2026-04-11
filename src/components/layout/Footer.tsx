@@ -3,8 +3,11 @@
 import React from 'react';
 import Link from 'next/link';
 import { Leaf, Phone, Mail, MapPin } from 'lucide-react';
+import { useStore } from '@/lib/StoreContext';
 
 export default function Footer() {
+  const { storeSettings } = useStore();
+  
   return (
     <footer className="bg-[#111111] text-white pt-16 pb-8 border-t border-[#222]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -15,11 +18,11 @@ export default function Footer() {
             <Link href="/" className="flex items-center gap-2 mb-4 group">
               <Leaf className="w-7 h-7 text-primary-600 group-hover:scale-110 transition-transform" />
               <span className="font-heading font-extrabold text-2xl tracking-tight text-white block">
-                AP originals
+                {storeSettings.appName}
               </span>
             </Link>
             <p className="text-white text-base mb-6 leading-relaxed font-medium">
-              Premium quality organic grocery & pure cold-pressed oils. Bringing the traditional purity back to your kitchen.
+              {storeSettings.appTagline}
             </p>
             <div className="flex items-center gap-4">
               <a href="#" className="text-white hover:text-accent-400 transition-colors p-2 bg-[#222] rounded-full hover:bg-[#333]">
@@ -75,7 +78,7 @@ export default function Footer() {
         </div>
 
         <div className="pt-8 border-t border-[#333] text-center md:text-left md:flex justify-between items-center text-white font-medium text-sm">
-          <p>&copy; {new Date().getFullYear()} AP originals. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} {storeSettings.appName}. All rights reserved.</p>
           <div className="flex justify-center gap-6 mt-4 md:mt-0">
             <Link href="#" className="hover:text-accent-400 transition-colors">Privacy Policy</Link>
             <Link href="#" className="hover:text-accent-400 transition-colors">Terms of Service</Link>

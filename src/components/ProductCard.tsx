@@ -63,7 +63,11 @@ export default function ProductCard({ product }: { product: Product }) {
           
           <img
             src={imgSrc}
-            onError={() => setImgSrc('/images/fallback.svg')}
+            onError={(e) => {
+              if (imgSrc !== '/images/fallback.svg') {
+                setImgSrc('/images/fallback.svg');
+              }
+            }}
             alt={product.name}
             className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-in-out"
           />

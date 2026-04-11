@@ -8,11 +8,24 @@ import { Plus, Edit2, Trash2, X, Image as ImageIcon, UploadCloud } from 'lucide-
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function AdminPage() {
-  const { products, addProduct, editProduct, deleteProduct } = useStore();
+  const { products, addProduct, editProduct, deleteProduct, storeSettings, updateStoreSettings, adminLogout } = useStore();
   const { addToast } = useToast();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+
+  // Store Settings State
+  const [isEditingSettings, setIsEditingSettings] = useState(false);
+  const [appName, setAppName] = useState('');
+  const [appTagline, setAppTagline] = useState('');
+
+  // Sync settings when loaded
+  React.useEffect(() => {
+    if (storeSettings && !isEditingSettings) {
+      setAppName(storeSettings.appName);
+      setAppTagline(storeSettings.appTagline);
+    }
+  }, [storeSettings, isEditingSettings]);
 
   // Form State
   const [name, setName] = useState('');
@@ -116,20 +129,92 @@ export default function AdminPage() {
     }
   };
 
+  const handleSettingsSave = (e: React.FormEvent) => {
+    e.preventDefault();
+    updateStoreSettings({ appName, appTagline });
+    setIsEditingSettings(false);
+    addToast('Settings updated successfully', 'success');
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full">
-      <div className="flex flex-col md:flex-row items-center justify-between mb-8 gap-4">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
         <div>
           <h1 className="text-3xl font-heading font-bold text-earth-900 dark:text-white">Admin Dashboard</h1>
           <p className="text-earth-500">Manage your inventory, prices, and offers dynamically via LocalStorage.</p>
         </div>
-        <button 
-          onClick={openAddModal}
-          className="bg-primary-600 hover:bg-primary-500 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-colors shadow-md"
-        >
-          <Plus className="w-5 h-5" />
-          Add Product
-        </button>
+        <div className="flex items-center gap-3 w-full md:w-auto">
+          <button 
+            onClick={openAddModal}
+            className="flex-1 md:flex-none justify-center bg-primary-600 hover:bg-primary-500 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-colors shadow-md"
+          >
+            <Plus className="w-5 h-5" />
+            Add Product
+          </button>
+          <button 
+            onClick={() => {
+               adminLogout();
+               addToast('Logged out successfully', 'info');
+            }}
+            className="px-4 py-3 border border-gray-200 text-gray-700 hover:bg-red-50 hover:text-red-600 hover:border-red-200 rounded-xl font-bold transition-colors bg-white shadow-sm"
+          >
+            Logout
+          </button>
+        </div>
+      </div>
+
+      {/* Store Settings Section */}
+      <div className="bg-white rounded-3xl border border-gray-200 p-6 mb-8 shadow-sm">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-bold text-[#111] font-heading flex items-center gap-2">
+            Store Branding
+          </h2>
+          {!isEditingSettings && (
+            <button onClick={() => setIsEditingSettings(true)} className="text-primary-600 font-bold hover:underline text-sm flex items-center gap-1 bg-primary-50 px-3 py-1.5 rounded-lg">
+              <Edit2 className="w-4 h-4" /> Edit
+            </button>
+          )}
+        </div>
+        
+        {isEditingSettings ? (
+          <form onSubmit={handleSettingsSave} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-bold text-[#111] mb-1">App Name</label>
+                <input 
+                  required 
+                  value={appName} 
+                  onChange={(e) => setAppName(e.target.value)} 
+                  className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-primary-500" 
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-bold text-[#111] mb-1">Tagline</label>
+                <input 
+                  required 
+                  value={appTagline} 
+                  onChange={(e) => setAppTagline(e.target.value)} 
+                  className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-primary-500" 
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 pt-2">
+              <button type="button" onClick={() => { setIsEditingSettings(false); setAppName(storeSettings.appName); setAppTagline(storeSettings.appTagline); }} className="px-4 py-2 text-gray-600 font-bold hover:bg-gray-100 rounded-lg transition-colors">Cancel</button>
+              <button type="submit" className="px-4 py-2 bg-primary-600 text-white font-bold rounded-lg hover:bg-primary-700 transition-colors">Save Details</button>
+            </div>
+          </form>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50 p-4 rounded-xl border border-gray-100">
+            <div>
+              <p className="text-[11px] text-gray-500 font-bold uppercase tracking-wider mb-1">App Name</p>
+              <p className="font-bold text-[#111] text-lg">{storeSettings?.appName}</p>
+            </div>
+            <div className="md:col-span-2">
+              <p className="text-[11px] text-gray-500 font-bold uppercase tracking-wider mb-1">Tagline</p>
+              <p className="font-semibold text-gray-700">{storeSettings?.appTagline}</p>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Products Table */}

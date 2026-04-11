@@ -8,7 +8,7 @@ import { ShoppingBag, Heart, Search, Menu, User, Leaf } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function Navbar() {
-  const { cartCount, wishlist, user } = useStore();
+  const { cartCount, wishlist, user, storeSettings, isAdmin } = useStore();
   const pathname = usePathname();
 
   const navLinks = [
@@ -32,7 +32,7 @@ export default function Navbar() {
             <Link href="/" className="flex items-center gap-2.5 group">
               <Leaf className="w-7 h-7 text-primary-600 group-hover:rotate-12 transition-transform" />
               <span className="font-heading font-extrabold text-[#111] text-2xl tracking-tight">
-                AP originals
+                {storeSettings.appName}
               </span>
             </Link>
           </div>
@@ -76,6 +76,11 @@ export default function Navbar() {
             <Link href={user ? "/profile" : "/auth/login"} className="p-2 text-[#111] hover:text-primary-600 transition-colors">
               <User className="w-6 h-6" />
             </Link>
+            {isAdmin && (
+              <Link href="/admin" className="p-2 text-[#111] hover:text-primary-600 transition-colors ml-2 font-bold flex items-center border border-gray-200 rounded-md px-3 bg-gray-50 text-sm">
+                Admin
+              </Link>
+            )}
           </div>
         </div>
       </div>
