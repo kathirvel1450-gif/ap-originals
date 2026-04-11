@@ -10,12 +10,33 @@ import Link from 'next/link';
 
 export default function Login() {
   const router = useRouter();
-  const { login } = useStore();
+  const { users, currentUser, registerUser, loginUser } = useStore();
   const { addToast } = useToast();
   
   const [step, setStep] = useState<'mobile' | 'otp'>('mobile');
+  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   const [mobile, setMobile] = useState('');
   const [otp, setOtp] = useState(['', '', '', '']);
+  const [expectedOtp, setExpectedOtp] = useState('');
+
+  // Protect route if already logged in (using currentUser instead of user)
+  React.useEffect(() => {
+    if (currentUser) {
+      router.push('/');
+    }
+  }, [currentUser, router]);
+
+  const sendOtp = () => {
+    const generatedOtp = Math.floor(1000 + Math.random() * 9000).toString();
+    setExpectedOtp(generatedOtp);
+    localStorage.setItem(`otp_${mobile}`, generatedOtp);
+    
+    // Developer convenience log
+    console.log(`[DEV MODE] OTP for ${mobile} is: ${generatedOtp}`);
+    
+    setStep('otp');
+    addToast('OTP sent securely to your mobile', 'success');
+  };
 
   const handleMobileSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,8 +44,21 @@ export default function Login() {
       addToast('Please enter a valid 10-digit mobile number', 'error');
       return;
     }
-    setStep('otp');
-    addToast('OTP sent securely to your mobile', 'success');
+
+    // Check if user exists before generating OTP
+    const userExists = users.some(u => u.mobile === mobile);
+    
+    if (authMode === 'register' && userExists) {
+      addToast('Account already exists. Please login.', 'error');
+      return;
+    }
+
+    if (authMode === 'login' && !userExists) {
+       addToast('Account not found. Please create an account.', 'error');
+       return;
+    }
+
+    sendOtp();
   };
 
   const handleOtpSubmit = (e: React.FormEvent) => {
@@ -35,9 +69,24 @@ export default function Login() {
       return;
     }
     
-    // Simulate login
-    login(mobile);
-    addToast('Logged in successfully', 'success');
+    const storedOtp = localStorage.getItem(`otp_${mobile}`);
+    
+    if (otpValue !== storedOtp && otpValue !== expectedOtp) {
+       addToast('Invalid OTP. Please try again.', 'error');
+       return;
+    }
+    
+    // Auth success
+    if (authMode === 'register') {
+      registerUser(mobile);
+      addToast('Account created successfully!', 'success');
+    } else {
+      loginUser(mobile);
+      addToast('Logged in successfully', 'success');
+    }
+
+    // Cleanup OTP
+    localStorage.removeItem(`otp_${mobile}`);
     router.push('/');
   };
 
@@ -55,7 +104,7 @@ export default function Login() {
   };
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-center py-12 px-4 w-full bg-earth-50 dark:bg-black/20 relative overflow-hidden">
+    <div className="flex-1 flex flex-col items-center justify-center py-12 px-4 w-full bg-cover relative overflow-hidden" style={{ backgroundColor: '#111' }}>
       
       {/* Background Decor */}
       <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-primary-400/20 rounded-full blur-3xl pointer-events-none"></div>
@@ -63,12 +112,12 @@ export default function Login() {
 
       <Link href="/" className="mb-8 flex items-center gap-2 group z-10">
         <Leaf className="w-8 h-8 text-primary-600 group-hover:rotate-12 transition-transform" />
-        <span className="font-heading font-bold text-2xl tracking-tight text-earth-900 dark:text-white">
+        <span className="font-heading font-bold text-2xl tracking-tight text-white">
           AP originals
         </span>
       </Link>
 
-      <div className="bg-white dark:bg-earth-900 border border-earth-200 dark:border-earth-800 rounded-3xl p-8 md:p-10 w-full max-w-md shadow-xl z-10 relative">
+      <div className="bg-[#1a1a1a] border border-[#333] rounded-3xl p-8 md:p-10 w-full max-w-md shadow-2xl z-10 relative">
         <AnimatePresence mode="wait">
           {step === 'mobile' ? (
             <motion.div
@@ -78,14 +127,35 @@ export default function Login() {
               exit={{ opacity: 0, x: 20 }}
               transition={{ duration: 0.3 }}
             >
-              <h2 className="text-2xl font-heading font-bold text-earth-900 dark:text-white mb-2">Welcome Back</h2>
-              <p className="text-earth-500 mb-8">Enter your mobile number to sign in or create an account.</p>
+              <div className="flex gap-4 mb-8">
+                 <button 
+                   type="button" 
+                   onClick={() => setAuthMode('login')} 
+                   className={`flex-1 pb-2 font-bold transition-colors border-b-2 ${authMode === 'login' ? 'border-primary-500 text-white' : 'border-transparent text-gray-500 hover:text-gray-300'}`}
+                 >
+                   Login
+                 </button>
+                 <button 
+                   type="button" 
+                   onClick={() => setAuthMode('register')} 
+                   className={`flex-1 pb-2 font-bold transition-colors border-b-2 ${authMode === 'register' ? 'border-primary-500 text-white' : 'border-transparent text-gray-500 hover:text-gray-300'}`}
+                 >
+                   Register
+                 </button>
+              </div>
+
+              <h2 className="text-2xl font-heading font-bold text-white mb-2">
+                {authMode === 'login' ? 'Welcome Back' : 'Create Account'}
+              </h2>
+              <p className="text-gray-400 mb-8">
+                 {authMode === 'login' ? 'Enter your mobile number to sign in.' : 'Enter your mobile number to get started.'}
+              </p>
 
               <form onSubmit={handleMobileSubmit} className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-earth-700 dark:text-earth-300 mb-2">Mobile Number</label>
-                  <div className="flex bg-earth-50 dark:bg-earth-800 rounded-xl overflow-hidden border border-earth-200 dark:border-earth-700 focus-within:ring-2 focus-within:ring-primary-500 focus-within:border-transparent transition-all">
-                    <span className="flex items-center px-4 text-earth-500 font-medium border-r border-earth-200 dark:border-earth-700 bg-earth-100 dark:bg-earth-900/50">
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Mobile Number</label>
+                  <div className="flex bg-[#222] rounded-xl overflow-hidden border border-[#444] focus-within:ring-2 focus-within:ring-primary-500 focus-within:border-transparent transition-all">
+                    <span className="flex items-center px-4 text-gray-400 font-medium border-r border-[#444] bg-[#2a2a2a]">
                       +91
                     </span>
                     <input 
@@ -93,7 +163,7 @@ export default function Login() {
                       maxLength={10}
                       value={mobile}
                       onChange={(e) => setMobile(e.target.value.replace(/\D/g, ''))}
-                      className="w-full bg-transparent p-4 outline-none font-medium dark:text-white"
+                      className="w-full bg-transparent p-4 outline-none font-medium text-white"
                       placeholder="98765 43210"
                       autoFocus
                     />
@@ -109,18 +179,6 @@ export default function Login() {
                   <ArrowRight className="w-5 h-5" />
                 </button>
               </form>
-
-              <div className="mt-8 relative flex items-center justify-center">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-earth-200 dark:border-earth-800"></div>
-                </div>
-                <div className="relative px-4 text-sm bg-white dark:bg-earth-900 text-earth-400">Or continue with</div>
-              </div>
-
-              <button className="mt-6 w-full flex items-center justify-center gap-3 border border-earth-200 dark:border-earth-800 hover:bg-earth-50 dark:hover:bg-earth-800 text-earth-900 dark:text-white font-medium py-3.5 rounded-full transition-colors">
-                 <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="w-5 h-5" />
-                 Sign in with Google
-              </button>
             </motion.div>
           ) : (
             <motion.div
@@ -132,16 +190,16 @@ export default function Login() {
             >
               <button 
                 onClick={() => setStep('mobile')}
-                className="text-primary-600 hover:text-primary-700 text-sm font-medium mb-6 inline-flex"
+                className="text-primary-500 hover:text-primary-400 text-sm font-medium mb-6 inline-flex"
               >
                 &larr; Back to mobile
               </button>
-              <h2 className="text-2xl font-heading font-bold text-earth-900 dark:text-white mb-2">Verify OTP</h2>
-              <p className="text-earth-500 mb-6">We've sent a 4-digit verification code to <strong className="text-earth-900 dark:text-earth-200">+91 {mobile}</strong></p>
+              <h2 className="text-2xl font-heading font-bold text-white mb-2">Verify OTP</h2>
+              <p className="text-gray-400 mb-6">We've sent a 4-digit verification code to <strong className="text-white">+91 {mobile}</strong></p>
               
-              <div className="bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 text-sm p-3 rounded-lg flex items-center justify-center gap-2 mb-8 border border-primary-200 dark:border-primary-800">
+              <div className="bg-primary-900/30 text-primary-400 text-sm p-3 rounded-lg flex items-center justify-center gap-2 mb-8 border border-primary-800/50">
                  <ShieldCheck className="w-4 h-4" />
-                 Demo Mode: Any 4-digit OTP works (e.g. <strong className="font-mono bg-white dark:bg-black px-1.5 py-0.5 rounded">1234</strong>)
+                 Open console to view OTP for this demo!
               </div>
 
               <form onSubmit={handleOtpSubmit} className="space-y-8">
@@ -154,7 +212,7 @@ export default function Login() {
                       maxLength={1}
                       value={otp[index]}
                       onChange={(e) => handleOtpChange(index, e.target.value.replace(/\D/g, ''))}
-                      className="w-14 h-14 md:w-16 md:h-16 text-center text-2xl font-bold bg-earth-50 dark:bg-earth-800 border border-earth-200 dark:border-earth-700 rounded-xl outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500 transition-all dark:text-white"
+                      className="w-14 h-14 md:w-16 md:h-16 text-center text-2xl font-bold bg-[#222] border border-[#444] rounded-xl outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500 transition-all text-white"
                     />
                   ))}
                 </div>
@@ -168,16 +226,9 @@ export default function Login() {
                 </button>
               </form>
 
-              <div className="mt-8 flex items-center justify-center gap-2 text-earth-500 text-sm">
+              <div className="mt-8 flex items-center justify-center gap-2 text-gray-500 text-sm">
                 <span>Didn't receive the code?</span>
-                <button className="font-semibold text-primary-600 hover:text-primary-700">Resend</button>
-              </div>
-
-              <div className="mt-8 p-4 bg-green-50 dark:bg-green-900/20 rounded-xl flex items-start gap-3">
-                <ShieldCheck className="w-5 h-5 text-green-600 dark:text-green-500 flex-shrink-0 mt-0.5" />
-                <p className="text-xs text-green-800 dark:text-green-400">
-                  Your number is secured with 256-bit encryption. We never share your details without your consent.
-                </p>
+                <button onClick={sendOtp} type="button" className="font-semibold text-primary-500 hover:text-primary-400">Resend</button>
               </div>
             </motion.div>
           )}

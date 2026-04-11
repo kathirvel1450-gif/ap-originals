@@ -8,7 +8,7 @@ import { ShoppingBag, Heart, Search, Menu, User, Leaf } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function Navbar() {
-  const { cartCount, wishlist, user, storeSettings, isAdmin } = useStore();
+  const { cartCount, wishlist, currentUser, storeSettings, isAdmin } = useStore();
   const pathname = usePathname();
 
   const navLinks = [
@@ -17,12 +17,12 @@ export default function Navbar() {
   ];
 
   return (
-    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b shadow-sm transition-colors duration-300">
+    <header className="sticky top-0 z-40 bg-[#000]/90 backdrop-blur-md border-b border-[#333] shadow-md transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-[72px]">
           {/* Mobile menu button */}
           <div className="flex items-center md:hidden">
-            <button className="p-2 -ml-2 text-[#111] hover:text-primary-600 transition-colors">
+            <button className="p-2 -ml-2 text-white hover:text-primary-500 transition-colors">
               <Menu className="w-7 h-7" />
             </button>
           </div>
@@ -30,8 +30,8 @@ export default function Navbar() {
           {/* Logo */}
           <div className="flex justify-center flex-1 md:justify-start">
             <Link href="/" className="flex items-center gap-2.5 group">
-              <Leaf className="w-7 h-7 text-primary-600 group-hover:rotate-12 transition-transform" />
-              <span className="font-heading font-extrabold text-[#111] text-2xl tracking-tight">
+              <Leaf className="w-7 h-7 text-primary-500 group-hover:rotate-12 transition-transform" />
+              <span className="font-heading font-extrabold text-white text-2xl tracking-tight">
                 {storeSettings.appName}
               </span>
             </Link>
@@ -43,10 +43,10 @@ export default function Navbar() {
               <Link
                 key={link.name}
                 href={link.href}
-                className={`text-base font-bold uppercase tracking-wider transition-all hover:text-primary-600 ${
+                className={`text-base font-bold uppercase tracking-wider transition-all hover:text-primary-500 ${
                   pathname === link.href
-                    ? 'text-primary-600 border-b-2 border-primary-600 pb-1'
-                    : 'text-[#111]'
+                    ? 'text-primary-500 border-b-2 border-primary-500 pb-1'
+                    : 'text-white'
                 }`}
               >
                 {link.name}
@@ -56,28 +56,28 @@ export default function Navbar() {
 
           {/* Actions */}
           <div className="flex items-center gap-5 justify-end flex-1 md:flex-none">
-            <button className="p-2 text-[#111] hover:text-primary-600 transition-colors hidden sm:block">
+            <button className="p-2 text-white hover:text-primary-500 transition-colors hidden sm:block">
               <Search className="w-6 h-6" />
             </button>
             
-            <Link href="/cart" className="p-2 text-[#111] hover:text-primary-600 transition-colors relative">
+            <Link href="/cart" className="p-2 text-white hover:text-primary-500 transition-colors relative">
               <ShoppingBag className="w-6 h-6" />
               {cartCount > 0 && (
                 <motion.span
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
-                  className="absolute top-0 right-0 inline-flex items-center justify-center px-1.5 py-0.5 text-[11px] font-extrabold leading-none text-white transform translate-x-1/4 -translate-y-1/4 bg-primary-600 rounded-full shadow border-2 border-white"
+                  className="absolute top-0 right-0 inline-flex items-center justify-center px-1.5 py-0.5 text-[11px] font-extrabold leading-none text-white transform translate-x-1/4 -translate-y-1/4 bg-primary-600 rounded-full shadow border-2 border-[#111]"
                 >
                   {cartCount}
                 </motion.span>
               )}
             </Link>
 
-            <Link href={user ? "/profile" : "/auth/login"} className="p-2 text-[#111] hover:text-primary-600 transition-colors">
+            <Link href={currentUser ? "/profile" : "/auth/login"} className="p-2 text-white hover:text-primary-500 transition-colors">
               <User className="w-6 h-6" />
             </Link>
             {isAdmin && (
-              <Link href="/admin" className="p-2 text-[#111] hover:text-primary-600 transition-colors ml-2 font-bold flex items-center border border-gray-200 rounded-md px-3 bg-gray-50 text-sm">
+              <Link href="/admin" className="p-2 text-white hover:text-[#111] hover:bg-white transition-colors ml-2 font-bold flex items-center border border-[#444] rounded-md px-3 bg-[#222] text-sm">
                 Admin
               </Link>
             )}

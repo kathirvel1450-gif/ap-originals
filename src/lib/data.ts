@@ -16,7 +16,7 @@ export type Product = {
   description: string;
 };
 
-export const categories: Category[] = [
+export const seedCategories: Category[] = [
   { id: '1', name: 'Oils', image: '/images/categories/oils.jpg' },
   { id: '2', name: 'Flours', image: '/images/categories/flours.jpg' },
   { id: '3', name: 'Dals', image: '/images/categories/dals.jpg' },

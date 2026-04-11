@@ -1,7 +1,12 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Product, seedProducts } from './data';
+import { Product, seedProducts, Category, seedCategories } from './data';
+
+export type UserData = {
+  mobile: string;
+  createdAt: number;
+};
 
 type CartItem = {
   product: Product;
@@ -19,6 +24,18 @@ type StoreContextType = {
   addProduct: (product: Product) => void;
   editProduct: (product: Product) => void;
   deleteProduct: (id: string) => void;
+
+  categories: Category[];
+  setCategories: React.Dispatch<React.SetStateAction<Category[]>>;
+  addCategory: (category: Category) => void;
+  editCategory: (category: Category) => void;
+  deleteCategory: (id: string) => void;
+  
+  users: UserData[];
+  currentUser: UserData | null;
+  registerUser: (mobile: string) => void;
+  loginUser: (mobile: string) => void;
+
   isLoadingData: boolean;
 
   cart: CartItem[];
@@ -32,7 +49,7 @@ type StoreContextType = {
   wishlist: string[];
   toggleWishlist: (productId: string) => void;
 
-  user: any | null;
+  user: any | null; // Kept for legacy compatibility if needed
   login: (mobileNumber: string) => void;
   logout: () => void;
 
@@ -48,6 +65,9 @@ const StoreContext = createContext<StoreContextType | undefined>(undefined);
 
 export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [users, setUsers] = useState<UserData[]>([]);
+  const [currentUser, setCurrentUser] = useState<UserData | null>(null);
   const [isLoadingData, setIsLoadingData] = useState(true);
   
   const [storeSettings, setStoreSettings] = useState<StoreSettings>({
@@ -76,6 +96,20 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         setProducts(seedProducts);
         localStorage.setItem('ap-products', JSON.stringify(seedProducts));
       }
+
+      const savedCategories = localStorage.getItem('categories');
+      if (savedCategories) {
+        setCategories(JSON.parse(savedCategories));
+      } else {
+        setCategories(seedCategories);
+        localStorage.setItem('categories', JSON.stringify(seedCategories));
+      }
+
+      const savedUsers = localStorage.getItem('users');
+      if (savedUsers) setUsers(JSON.parse(savedUsers));
+
+      const savedCurrentUser = localStorage.getItem('currentUser');
+      if (savedCurrentUser) setCurrentUser(JSON.parse(savedCurrentUser));
 
       const savedSettings = localStorage.getItem('ap-settings');
       if (savedSettings) {
@@ -106,6 +140,28 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem('ap-products', JSON.stringify(products));
     }
   }, [products, isLoadingData]);
+
+  useEffect(() => {
+    if (!isLoadingData) {
+      localStorage.setItem('categories', JSON.stringify(categories));
+    }
+  }, [categories, isLoadingData]);
+
+  useEffect(() => {
+    if (!isLoadingData) {
+      localStorage.setItem('users', JSON.stringify(users));
+    }
+  }, [users, isLoadingData]);
+
+  useEffect(() => {
+    if (!isLoadingData) {
+      if (currentUser) {
+        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+      } else {
+        localStorage.removeItem('currentUser');
+      }
+    }
+  }, [currentUser, isLoadingData]);
 
   useEffect(() => {
     if (!isLoadingData) {
@@ -143,6 +199,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const addProduct = (product: Product) => setProducts(prev => [...prev, product]);
   const editProduct = (product: Product) => setProducts(prev => prev.map(p => p.id === product.id ? product : p));
   const deleteProduct = (id: string) => setProducts(prev => prev.filter(p => p.id !== id));
+
+  const addCategory = (category: Category) => setCategories(prev => [...prev, category]);
+  const editCategory = (category: Category) => setCategories(prev => prev.map(c => c.id === category.id ? category : c));
+  const deleteCategory = (id: string) => setCategories(prev => prev.filter(c => c.id !== id));
 
   const addToCart = (product: Product, quantity = 1) => {
     setCart((prev) => {
@@ -188,8 +248,22 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     setUser({ mobile: mobileNumber, name: "Guest User" });
   };
 
+  const registerUser = (mobile: string) => {
+    const newUser = { mobile, createdAt: Date.now() };
+    setUsers(prev => [...prev, newUser]);
+    setCurrentUser(newUser);
+  };
+
+  const loginUser = (mobile: string) => {
+    const existing = users.find(u => u.mobile === mobile);
+    if (existing) {
+      setCurrentUser(existing);
+    }
+  };
+
   const logout = () => {
     setUser(null);
+    setCurrentUser(null);
   };
 
   const cartTotal = cart.reduce(
@@ -212,6 +286,15 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         addProduct,
         editProduct,
         deleteProduct,
+        categories,
+        setCategories,
+        addCategory,
+        editCategory,
+        deleteCategory,
+        users,
+        currentUser,
+        registerUser,
+        loginUser,
         isLoadingData,
         cart,
         addToCart,

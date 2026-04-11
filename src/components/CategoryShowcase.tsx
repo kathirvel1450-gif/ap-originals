@@ -2,12 +2,13 @@
 
 import React, { useRef } from 'react';
 import Link from 'next/link';
-import { categories } from '@/lib/data';
+import { useStore } from '@/lib/StoreContext';
 import { ChevronRight, ChevronLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function CategoryShowcase() {
   const scrollContainer = useRef<HTMLDivElement>(null);
+  const { categories } = useStore();
 
   const scrollLeft = () => {
     if (scrollContainer.current) {
@@ -21,19 +22,21 @@ export default function CategoryShowcase() {
     }
   };
 
+  if (categories.length === 0) return null;
+
   return (
-    <section className="py-12 bg-earth-50 dark:bg-black/20">
+    <section className="py-12 bg-[#000]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-end justify-between mb-8">
           <div>
-            <h2 className="text-3xl font-heading font-extrabold text-[#111] dark:text-white">Shop by Category</h2>
-            <p className="text-[#111] dark:text-white font-medium mt-2">Explore our pure, organic collections</p>
+            <h2 className="text-3xl font-heading font-extrabold text-white">Shop by Category</h2>
+            <p className="text-gray-400 font-medium mt-2">Explore our pure, organic collections</p>
           </div>
           <div className="hidden sm:flex gap-2">
-            <button onClick={scrollLeft} className="p-2 rounded-full border border-earth-200 dark:border-earth-800 text-earth-600 dark:text-gray-300 hover:bg-earth-100 dark:hover:bg-earth-800 transition-colors">
+            <button onClick={scrollLeft} className="p-2 rounded-full border border-gray-700 text-gray-300 hover:bg-[#222] transition-colors">
               <ChevronLeft className="w-5 h-5" />
             </button>
-            <button onClick={scrollRight} className="p-2 rounded-full border border-earth-200 dark:border-earth-800 text-earth-600 dark:text-gray-300 hover:bg-earth-100 dark:hover:bg-earth-800 transition-colors">
+            <button onClick={scrollRight} className="p-2 rounded-full border border-gray-700 text-gray-300 hover:bg-[#222] transition-colors">
               <ChevronRight className="w-5 h-5" />
             </button>
           </div>
@@ -52,7 +55,7 @@ export default function CategoryShowcase() {
                 className="flex-none w-32 sm:w-40"
               >
                 <Link href={`/shop?category=${encodeURIComponent(category.name)}`} className="group block">
-                  <div className="aspect-square rounded-full overflow-hidden mb-4 border-4 border-white dark:border-earth-800 shadow-md">
+                  <div className="aspect-square rounded-full overflow-hidden mb-4 border-4 border-[#333] shadow-lg bg-[#222]">
                     <img 
                       src={category.image} 
                       onError={(e) => { e.currentTarget.src = '/images/fallback.svg'; }}
@@ -60,7 +63,7 @@ export default function CategoryShowcase() {
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
                     />
                   </div>
-                  <h3 className="text-center font-extrabold text-[#111] dark:text-white group-hover:text-primary-600 transition-colors">
+                  <h3 className="text-center font-extrabold text-white group-hover:text-primary-500 transition-colors">
                     {category.name}
                   </h3>
                 </Link>

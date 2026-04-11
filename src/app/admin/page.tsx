@@ -3,23 +3,23 @@
 import React, { useState } from 'react';
 import { useStore } from '@/lib/StoreContext';
 import { useToast } from '@/lib/ToastContext';
-import { categories, Product } from '@/lib/data';
+import { Product, Category } from '@/lib/data';
 import { Plus, Edit2, Trash2, X, Image as ImageIcon, UploadCloud } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function AdminPage() {
-  const { products, addProduct, editProduct, deleteProduct, storeSettings, updateStoreSettings, adminLogout } = useStore();
+  const { 
+    products, addProduct, editProduct, deleteProduct, 
+    categories, addCategory, editCategory, deleteCategory,
+    storeSettings, updateStoreSettings, adminLogout 
+  } = useStore();
   const { addToast } = useToast();
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-
-  // Store Settings State
+  // --- Store Settings State ---
   const [isEditingSettings, setIsEditingSettings] = useState(false);
   const [appName, setAppName] = useState('');
   const [appTagline, setAppTagline] = useState('');
 
-  // Sync settings when loaded
   React.useEffect(() => {
     if (storeSettings && !isEditingSettings) {
       setAppName(storeSettings.appName);
@@ -27,49 +27,34 @@ export default function AdminPage() {
     }
   }, [storeSettings, isEditingSettings]);
 
-  // Form State
-  const [name, setName] = useState('');
+  // --- Product Form State ---
+  const [isProductModalOpen, setIsProductModalOpen] = useState(false);
+  const [editingProductId, setEditingProductId] = useState<string | null>(null);
+  const [productName, setProductName] = useState('');
   const [price, setPrice] = useState('');
   const [discountPercentage, setDiscountPercentage] = useState('');
   const [stockStatus, setStockStatus] = useState<'In Stock' | 'Out of Stock' | 'Low Stock'>('In Stock');
-  const [category, setCategory] = useState(categories[0].name);
+  const [productCategory, setProductCategory] = useState('');
   const [description, setDescription] = useState('');
-  
-  // Image State
-  const [imageMode, setImageMode] = useState<'url' | 'upload'>('url');
-  const [imageUrl, setImageUrl] = useState('');
-  
-  const resetForm = () => {
-    setName('');
-    setPrice('');
-    setDiscountPercentage('');
-    setStockStatus('In Stock');
-    setCategory(categories[0].name);
-    setDescription('');
-    setImageUrl('');
-    setImageMode('url');
-    setEditingId(null);
+  const [productImageMode, setProductImageMode] = useState<'url' | 'upload'>('url');
+  const [productImageUrl, setProductImageUrl] = useState('');
+
+  // --- Category Form State ---
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
+  const [categoryName, setCategoryName] = useState('');
+  const [categoryImageMode, setCategoryImageMode] = useState<'url' | 'upload'>('url');
+  const [categoryImageUrl, setCategoryImageUrl] = useState('');
+
+  // --- Handlers ---
+  const handleSettingsSave = (e: React.FormEvent) => {
+    e.preventDefault();
+    updateStoreSettings({ appName, appTagline });
+    setIsEditingSettings(false);
+    addToast('Settings updated successfully', 'success');
   };
 
-  const openAddModal = () => {
-    resetForm();
-    setIsModalOpen(true);
-  };
-
-  const openEditModal = (p: Product) => {
-    setEditingId(p.id);
-    setName(p.name);
-    setPrice(p.price.toString());
-    setDiscountPercentage(p.discountPercentage ? p.discountPercentage.toString() : '');
-    setStockStatus(p.stockStatus);
-    setCategory(p.category);
-    setDescription(p.description);
-    setImageUrl(p.image);
-    setImageMode(p.image.startsWith('data:image') ? 'upload' : 'url');
-    setIsModalOpen(true);
-  };
-
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, setUrl: React.Dispatch<React.SetStateAction<string>>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -81,36 +66,63 @@ export default function AdminPage() {
     const reader = new FileReader();
     reader.onload = (event) => {
       if (event.target?.result) {
-        setImageUrl(event.target.result as string);
+        setUrl(event.target.result as string);
       }
     };
     reader.readAsDataURL(file);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  // --- Product Handlers ---
+  const resetProductForm = () => {
+    setProductName('');
+    setPrice('');
+    setDiscountPercentage('');
+    setStockStatus('In Stock');
+    setProductCategory(categories[0]?.name || '');
+    setDescription('');
+    setProductImageUrl('');
+    setProductImageMode('url');
+    setEditingProductId(null);
+  };
 
-    if (!name || !price || !imageUrl || !category) {
+  const openAddProductModal = () => {
+    resetProductForm();
+    setIsProductModalOpen(true);
+  };
+
+  const openEditProductModal = (p: Product) => {
+    setEditingProductId(p.id);
+    setProductName(p.name);
+    setPrice(p.price.toString());
+    setDiscountPercentage(p.discountPercentage ? p.discountPercentage.toString() : '');
+    setStockStatus(p.stockStatus);
+    setProductCategory(p.category);
+    setDescription(p.description);
+    setProductImageUrl(p.image);
+    setProductImageMode(p.image.startsWith('data:image') ? 'upload' : 'url');
+    setIsProductModalOpen(true);
+  };
+
+  const handleProductSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!productName || !price || !productImageUrl || !productCategory) {
       addToast('Please fill all required fields', 'error');
       return;
     }
 
-    const currentPrice = Number(price);
-    const currentDiscount = discountPercentage ? Number(discountPercentage) : undefined;
-
     const newProduct: Product = {
-      id: editingId || `p_${Date.now()}`,
-      name,
-      price: currentPrice,
-      discountPercentage: currentDiscount,
+      id: editingProductId || `p_${Date.now()}`,
+      name: productName,
+      price: Number(price),
+      discountPercentage: discountPercentage ? Number(discountPercentage) : undefined,
       stockStatus,
-      category,
-      rating: editingId ? (products.find(p => p.id === editingId)?.rating || 5.0) : 5.0, // Keep rating or add default
-      image: imageUrl,
+      category: productCategory,
+      rating: editingProductId ? (products.find(p => p.id === editingProductId)?.rating || 5.0) : 5.0,
+      image: productImageUrl,
       description
     };
 
-    if (editingId) {
+    if (editingProductId) {
       editProduct(newProduct);
       addToast('Product updated successfully', 'success');
     } else {
@@ -118,39 +130,78 @@ export default function AdminPage() {
       addToast('Product added successfully', 'success');
     }
 
-    setIsModalOpen(false);
-    resetForm();
+    setIsProductModalOpen(false);
+    resetProductForm();
   };
 
-  const handleDelete = (id: string, productName: string) => {
-    if (window.confirm(`Are you sure you want to delete ${productName}?`)) {
+  const handleDeleteProduct = (id: string, name: string) => {
+    if (window.confirm(`Are you sure you want to delete ${name}?`)) {
       deleteProduct(id);
       addToast('Product deleted', 'info');
     }
   };
 
-  const handleSettingsSave = (e: React.FormEvent) => {
+  // --- Category Handlers ---
+  const resetCategoryForm = () => {
+    setCategoryName('');
+    setCategoryImageUrl('');
+    setCategoryImageMode('url');
+    setEditingCategoryId(null);
+  };
+
+  const openAddCategoryModal = () => {
+    resetCategoryForm();
+    setIsCategoryModalOpen(true);
+  };
+
+  const openEditCategoryModal = (c: Category) => {
+    setEditingCategoryId(c.id);
+    setCategoryName(c.name);
+    setCategoryImageUrl(c.image);
+    setCategoryImageMode(c.image.startsWith('data:image') ? 'upload' : 'url');
+    setIsCategoryModalOpen(true);
+  };
+
+  const handleCategorySubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    updateStoreSettings({ appName, appTagline });
-    setIsEditingSettings(false);
-    addToast('Settings updated successfully', 'success');
+    if (!categoryName || !categoryImageUrl) {
+      addToast('Please fill all required fields', 'error');
+      return;
+    }
+
+    const newCategory: Category = {
+      id: editingCategoryId || `c_${Date.now()}`,
+      name: categoryName,
+      image: categoryImageUrl
+    };
+
+    if (editingCategoryId) {
+      editCategory(newCategory);
+      addToast('Category updated successfully', 'success');
+    } else {
+      addCategory(newCategory);
+      addToast('Category added successfully', 'success');
+    }
+
+    setIsCategoryModalOpen(false);
+    resetCategoryForm();
+  };
+
+  const handleDeleteCategory = (id: string, name: string) => {
+    if (window.confirm(`Are you sure you want to delete category "${name}"?`)) {
+      deleteCategory(id);
+      addToast('Category deleted', 'info');
+    }
   };
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full">
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
         <div>
-          <h1 className="text-3xl font-heading font-bold text-earth-900 dark:text-white">Admin Dashboard</h1>
-          <p className="text-earth-500">Manage your inventory, prices, and offers dynamically via LocalStorage.</p>
+          <h1 className="text-3xl font-heading font-bold text-[#111] dark:text-white">Admin Dashboard</h1>
+          <p className="text-gray-500">Manage your inventory, categories, and offers dynamically.</p>
         </div>
         <div className="flex items-center gap-3 w-full md:w-auto">
-          <button 
-            onClick={openAddModal}
-            className="flex-1 md:flex-none justify-center bg-primary-600 hover:bg-primary-500 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-colors shadow-md"
-          >
-            <Plus className="w-5 h-5" />
-            Add Product
-          </button>
           <button 
             onClick={() => {
                adminLogout();
@@ -185,7 +236,7 @@ export default function AdminPage() {
                   required 
                   value={appName} 
                   onChange={(e) => setAppName(e.target.value)} 
-                  className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-primary-500" 
+                  className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-primary-500 text-[#111]" 
                 />
               </div>
               <div className="md:col-span-2">
@@ -194,7 +245,7 @@ export default function AdminPage() {
                   required 
                   value={appTagline} 
                   onChange={(e) => setAppTagline(e.target.value)} 
-                  className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-primary-500" 
+                  className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-primary-500 text-[#111]" 
                 />
               </div>
             </div>
@@ -217,122 +268,165 @@ export default function AdminPage() {
         )}
       </div>
 
-      {/* Products Table */}
-      <div className="bg-white dark:bg-earth-900 rounded-3xl border border-earth-200 dark:border-earth-800 overflow-hidden shadow-sm">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-            <tr className="bg-earth-50 dark:bg-earth-800/50 border-b border-earth-200 dark:border-earth-800 text-[#111] dark:text-white text-sm font-semibold uppercase tracking-wider">
-                <th className="p-4">Product</th>
-                <th className="p-4">Category</th>
-                <th className="p-4 hidden md:table-cell">Price / Offer</th>
-                <th className="p-4 hidden sm:table-cell">Stock</th>
-                <th className="p-4 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-earth-200 dark:divide-earth-800">
-              {products.map(p => {
-                const finalPrice = p.discountPercentage 
-                  ? p.price - Math.round((p.price * p.discountPercentage) / 100) 
-                  : p.price;
-
-                return (
-                  <tr key={p.id} className="hover:bg-earth-50 dark:hover:bg-earth-800/30 transition-colors">
-                    <td className="p-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-lg overflow-hidden bg-earth-100 flex-shrink-0">
-                          <img src={p.image} alt={p.name} className="w-full h-full object-cover" />
-                        </div>
-                        <div>
-                          <p className="font-bold text-earth-900 dark:text-white line-clamp-1">{p.name}</p>
-                          <p className="text-xs text-earth-500 sm:hidden">₹{finalPrice}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="p-4 text-sm text-earth-700 dark:text-earth-300">
-                      <span className="bg-earth-100 dark:bg-earth-800 px-2.5 py-1 rounded-md">{p.category}</span>
-                    </td>
-                    <td className="p-4 hidden md:table-cell">
-                      <div className="flex flex-col">
-                        <span className="font-bold text-earth-900 dark:text-white">₹{finalPrice}</span>
-                        {p.discountPercentage && (
-                          <span className="text-xs text-accent-600 font-semibold">{p.discountPercentage}% OFF (₹{p.price})</span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="p-4 hidden sm:table-cell">
-                      <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
-                        p.stockStatus === 'In Stock' ? 'bg-green-100 text-green-700' :
-                        p.stockStatus === 'Low Stock' ? 'bg-yellow-100 text-yellow-700' :
-                        'bg-red-100 text-red-700'
-                      }`}>
-                        {p.stockStatus}
-                      </span>
-                    </td>
-                    <td className="p-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <button onClick={() => openEditModal(p)} className="p-2 text-primary-600 hover:bg-primary-50 rounded-lg transition-colors">
-                          <Edit2 className="w-4 h-4" />
-                        </button>
-                        <button onClick={() => handleDelete(p.id, p.name)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-              {products.length === 0 && (
-                <tr>
-                  <td colSpan={5} className="p-8 text-center text-earth-500">
-                    No products found. Add some to get started!
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+      {/* Categories Section */}
+      <div className="mb-12">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-2xl font-bold text-[#111] font-heading">Categories</h2>
+          <button 
+            onClick={openAddCategoryModal}
+            className="bg-primary-600 hover:bg-primary-500 text-white px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 transition-colors shadow-sm"
+          >
+            <Plus className="w-4 h-4" /> Add Category
+          </button>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+          {categories.map((c) => (
+            <div key={c.id} className="bg-white rounded-2xl p-4 border border-gray-200 shadow-sm flex flex-col items-center group relative">
+              <div className="absolute top-2 right-2 flex gap-1 bg-white/90 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity p-1 shadow-sm border border-gray-100">
+                <button onClick={() => openEditCategoryModal(c)} className="p-1.5 text-primary-600 hover:bg-primary-50 rounded transition-colors"><Edit2 className="w-3 h-3" /></button>
+                <button onClick={() => handleDeleteCategory(c.id, c.name)} className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors"><Trash2 className="w-3 h-3" /></button>
+              </div>
+              <div className="w-16 h-16 rounded-full overflow-hidden mb-3 border-2 border-gray-100 shadow-sm flex-shrink-0 bg-gray-50">
+                 <img src={c.image} alt={c.name} onError={(e) => { e.currentTarget.src = '/images/fallback.svg'; }} className="w-full h-full object-cover" />
+              </div>
+              <span className="font-bold text-[#111] text-center text-sm">{c.name}</span>
+            </div>
+          ))}
+          {categories.length === 0 && (
+             <div className="col-span-full p-8 text-center text-gray-500 bg-white rounded-2xl border border-gray-200 border-dashed">
+                No categories found.
+             </div>
+          )}
         </div>
       </div>
 
-      {/* Modal / Form */}
+      {/* Products Table */}
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-2xl font-bold text-[#111] font-heading">Products List</h2>
+          <button 
+            onClick={openAddProductModal}
+            className="bg-primary-600 hover:bg-primary-500 text-white px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 transition-colors shadow-sm"
+          >
+            <Plus className="w-4 h-4" /> Add Product
+          </button>
+        </div>
+        <div className="bg-white rounded-3xl border border-gray-200 overflow-hidden shadow-sm">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+              <tr className="bg-gray-50 border-b border-gray-200 text-[#111] text-sm font-bold uppercase tracking-wider">
+                  <th className="p-4">Product</th>
+                  <th className="p-4">Category</th>
+                  <th className="p-4 hidden md:table-cell">Price / Offer</th>
+                  <th className="p-4 hidden sm:table-cell">Stock</th>
+                  <th className="p-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {products.map(p => {
+                  const finalPrice = p.discountPercentage 
+                    ? p.price - Math.round((p.price * p.discountPercentage) / 100) 
+                    : p.price;
+
+                  return (
+                    <tr key={p.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="p-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0 border border-gray-200">
+                            <img src={p.image} alt={p.name} onError={(e) => { e.currentTarget.src = '/images/fallback.svg'; }} className="w-full h-full object-cover" />
+                          </div>
+                          <div>
+                            <p className="font-bold text-[#111] line-clamp-1">{p.name}</p>
+                            <p className="text-xs text-gray-500 sm:hidden">₹{finalPrice}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="p-4 text-sm text-gray-700">
+                        <span className="bg-gray-100 font-semibold px-2.5 py-1 rounded-md">{p.category}</span>
+                      </td>
+                      <td className="p-4 hidden md:table-cell">
+                        <div className="flex flex-col">
+                          <span className="font-bold text-[#111]">₹{finalPrice}</span>
+                          {p.discountPercentage && (
+                            <span className="text-xs text-primary-600 font-bold">{p.discountPercentage}% OFF (₹{p.price})</span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="p-4 hidden sm:table-cell">
+                        <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
+                          p.stockStatus === 'In Stock' ? 'bg-green-100 text-green-700 border border-green-200' :
+                          p.stockStatus === 'Low Stock' ? 'bg-yellow-100 text-yellow-700 border border-yellow-200' :
+                          'bg-red-100 text-red-700 border border-red-200'
+                        }`}>
+                          {p.stockStatus}
+                        </span>
+                      </td>
+                      <td className="p-4 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button onClick={() => openEditProductModal(p)} className="p-2 text-primary-600 hover:bg-primary-50 rounded-lg transition-colors border border-transparent hover:border-primary-100">
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                          <button onClick={() => handleDeleteProduct(p.id, p.name)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-100">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+                {products.length === 0 && (
+                  <tr>
+                    <td colSpan={5} className="p-8 text-center text-gray-500">
+                      No products found. Add some to get started!
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      {/* Product Modal */}
       <AnimatePresence>
-        {isModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-earth-900/60 backdrop-blur-sm overflow-y-auto">
+        {isProductModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
             <motion.div 
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white dark:bg-earth-900 rounded-3xl shadow-2xl w-full max-w-2xl my-8 relative flex flex-col max-h-[90vh]"
+              className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl my-8 relative flex flex-col max-h-[90vh]"
             >
-              <div className="p-6 border-b border-earth-100 dark:border-earth-800 flex items-center justify-between sticky top-0 bg-white dark:bg-earth-900 z-10 rounded-t-3xl">
-                <h2 className="text-2xl font-heading font-bold text-earth-900 dark:text-white">
-                  {editingId ? 'Edit Product' : 'Add New Product'}
+              <div className="p-6 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white z-10 rounded-t-3xl">
+                <h2 className="text-2xl font-heading font-bold text-[#111]">
+                  {editingProductId ? 'Edit Product' : 'Add New Product'}
                 </h2>
-                <button onClick={() => setIsModalOpen(false)} className="p-2 text-earth-400 hover:bg-earth-100 dark:hover:bg-earth-800 rounded-full transition-colors">
+                <button onClick={() => setIsProductModalOpen(false)} className="p-2 text-gray-500 hover:bg-gray-100 rounded-full transition-colors">
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
-              <form id="product-form" onSubmit={handleSubmit} className="p-6 space-y-6 overflow-y-auto">
+              <form id="product-form" onSubmit={handleProductSubmit} className="p-6 space-y-6 overflow-y-auto">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-earth-700 dark:text-earth-300 mb-1">Product Name *</label>
-                    <input required value={name} onChange={(e) => setName(e.target.value)} type="text" className="w-full p-3 bg-earth-50 dark:bg-black/50 border border-earth-200 dark:border-earth-700 rounded-xl outline-none focus:ring-2 focus:ring-primary-500 dark:text-white" />
+                    <label className="block text-sm font-bold text-[#111] mb-1">Product Name *</label>
+                    <input required value={productName} onChange={(e) => setProductName(e.target.value)} type="text" className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-primary-500 text-[#111]" />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-earth-700 dark:text-earth-300 mb-1">Base Price (₹) *</label>
-                    <input required value={price} onChange={(e) => setPrice(e.target.value)} type="number" min="0" className="w-full p-3 bg-earth-50 dark:bg-black/50 border border-earth-200 dark:border-earth-700 rounded-xl outline-none focus:ring-2 focus:ring-primary-500 dark:text-white" />
+                    <label className="block text-sm font-bold text-[#111] mb-1">Base Price (₹) *</label>
+                    <input required value={price} onChange={(e) => setPrice(e.target.value)} type="number" min="0" className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-primary-500 text-[#111]" />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-earth-700 dark:text-earth-300 mb-1">Discount Percentage (%)</label>
-                    <input value={discountPercentage} onChange={(e) => setDiscountPercentage(e.target.value)} type="number" min="0" max="100" placeholder="e.g. 15" className="w-full p-3 bg-earth-50 dark:bg-black/50 border border-earth-200 dark:border-earth-700 rounded-xl outline-none focus:ring-2 focus:ring-primary-500 dark:text-white" />
+                    <label className="block text-sm font-bold text-[#111] mb-1">Discount Percentage (%)</label>
+                    <input value={discountPercentage} onChange={(e) => setDiscountPercentage(e.target.value)} type="number" min="0" max="100" placeholder="e.g. 15" className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-primary-500 text-[#111]" />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-earth-700 dark:text-earth-300 mb-1">Category *</label>
-                    <select required value={category} onChange={(e) => setCategory(e.target.value)} className="w-full p-3 bg-earth-50 dark:bg-black/50 border border-earth-200 dark:border-earth-700 rounded-xl outline-none focus:ring-2 focus:ring-primary-500 dark:text-white">
+                    <label className="block text-sm font-bold text-[#111] mb-1">Category *</label>
+                    <select required value={productCategory} onChange={(e) => setProductCategory(e.target.value)} className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-primary-500 text-[#111]">
                       {categories.map(c => (
                         <option key={c.id} value={c.name}>{c.name}</option>
                       ))}
@@ -340,8 +434,8 @@ export default function AdminPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-earth-700 dark:text-earth-300 mb-1">Stock Status *</label>
-                    <select required value={stockStatus} onChange={(e) => setStockStatus(e.target.value as any)} className="w-full p-3 bg-earth-50 dark:bg-black/50 border border-earth-200 dark:border-earth-700 rounded-xl outline-none focus:ring-2 focus:ring-primary-500 dark:text-white">
+                    <label className="block text-sm font-bold text-[#111] mb-1">Stock Status *</label>
+                    <select required value={stockStatus} onChange={(e) => setStockStatus(e.target.value as any)} className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-primary-500 text-[#111]">
                       <option value="In Stock">In Stock</option>
                       <option value="Low Stock">Low Stock</option>
                       <option value="Out of Stock">Out of Stock</option>
@@ -349,52 +443,51 @@ export default function AdminPage() {
                   </div>
 
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-earth-700 dark:text-earth-300 mb-1">Description *</label>
-                    <textarea required value={description} onChange={(e) => setDescription(e.target.value)} rows={3} className="w-full p-3 bg-earth-50 dark:bg-black/50 border border-earth-200 dark:border-earth-700 rounded-xl outline-none focus:ring-2 focus:ring-primary-500 dark:text-white"></textarea>
+                    <label className="block text-sm font-bold text-[#111] mb-1">Description *</label>
+                    <textarea required value={description} onChange={(e) => setDescription(e.target.value)} rows={3} className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-primary-500 text-[#111]"></textarea>
                   </div>
 
                   {/* Image Section */}
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-earth-700 dark:text-earth-300 mb-2">Product Image *</label>
+                    <label className="block text-sm font-bold text-[#111] mb-2">Product Image *</label>
                     
                     <div className="flex gap-4 mb-4">
-                      <label className="flex items-center gap-2 text-sm cursor-pointer dark:text-gray-300">
-                        <input type="radio" value="url" checked={imageMode === 'url'} onChange={() => setImageMode('url')} className="text-primary-600 focus:ring-primary-500" />
+                      <label className="flex items-center gap-2 text-sm cursor-pointer font-bold text-gray-700">
+                        <input type="radio" value="url" checked={productImageMode === 'url'} onChange={() => setProductImageMode('url')} className="text-primary-600 focus:ring-primary-500" />
                         Image URL
                       </label>
-                      <label className="flex items-center gap-2 text-sm cursor-pointer dark:text-gray-300">
-                        <input type="radio" value="upload" checked={imageMode === 'upload'} onChange={() => setImageMode('upload')} className="text-primary-600 focus:ring-primary-500" />
+                      <label className="flex items-center gap-2 text-sm cursor-pointer font-bold text-gray-700">
+                        <input type="radio" value="upload" checked={productImageMode === 'upload'} onChange={() => setProductImageMode('upload')} className="text-primary-600 focus:ring-primary-500" />
                         Upload File (Base64)
                       </label>
                     </div>
 
-                    {imageMode === 'url' ? (
+                    {productImageMode === 'url' ? (
                        <input 
                          required 
                          type="url" 
-                         value={imageUrl} 
-                         onChange={(e) => setImageUrl(e.target.value)} 
+                         value={productImageUrl} 
+                         onChange={(e) => setProductImageUrl(e.target.value)} 
                          placeholder="https://images.unsplash.com/photo-..." 
-                         className="w-full p-3 bg-earth-50 dark:bg-black/50 border border-earth-200 dark:border-earth-700 rounded-xl outline-none focus:ring-2 focus:ring-primary-500 dark:text-white mb-4" 
+                         className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-primary-500 text-[#111] mb-4" 
                        />
                     ) : (
                       <div className="mb-4">
-                        <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-earth-300 dark:border-earth-700 rounded-xl bg-earth-50 dark:bg-earth-800/50 hover:bg-earth-100 dark:hover:bg-earth-800 cursor-pointer transition-colors">
+                        <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-xl bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors">
                           <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                            <UploadCloud className="w-8 h-8 text-earth-400 mb-2" />
-                            <p className="text-sm text-earth-500 dark:text-earth-400 font-medium">Click to upload image</p>
-                            <p className="text-xs text-earth-400 mt-1">PNG, JPG, WEBP (Max 2MB)</p>
+                            <UploadCloud className="w-8 h-8 text-gray-400 mb-2" />
+                            <p className="text-sm text-gray-500 font-bold">Click to upload image</p>
+                            <p className="text-xs text-gray-400 mt-1">PNG, JPG, WEBP (Max 2MB)</p>
                           </div>
-                          <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+                          <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, setProductImageUrl)} className="hidden" />
                         </label>
                       </div>
                     )}
 
-                    {/* Image Preview */}
-                    {imageUrl && (
-                      <div className="mt-2 bg-earth-50 dark:bg-earth-800/50 p-2 rounded-xl inline-block border border-earth-200 dark:border-earth-700">
+                    {productImageUrl && (
+                      <div className="mt-2 bg-gray-50 p-2 rounded-xl inline-block border border-gray-200">
                         <div className="w-24 h-24 rounded-lg overflow-hidden relative">
-                           <img src={imageUrl} alt="Preview" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                           <img src={productImageUrl} alt="Preview" className="w-full h-full object-cover bg-white" onError={(e) => { (e.target as HTMLImageElement).src = '/images/fallback.svg'; }} />
                         </div>
                       </div>
                     )}
@@ -402,8 +495,8 @@ export default function AdminPage() {
                 </div>
               </form>
 
-              <div className="p-6 border-t border-earth-100 dark:border-earth-800 flex justify-end gap-4 sticky bottom-0 bg-white dark:bg-earth-900 rounded-b-3xl">
-                <button type="button" onClick={() => setIsModalOpen(false)} className="px-6 py-2.5 rounded-xl font-bold text-earth-600 dark:text-earth-300 hover:bg-earth-100 dark:hover:bg-earth-800 transition-colors">
+              <div className="p-6 border-t border-gray-200 flex justify-end gap-4 sticky bottom-0 bg-white rounded-b-3xl">
+                <button type="button" onClick={() => setIsProductModalOpen(false)} className="px-6 py-2.5 rounded-xl font-bold text-gray-600 hover:bg-gray-100 transition-colors">
                   Cancel
                 </button>
                 <button form="product-form" type="submit" className="px-6 py-2.5 rounded-xl font-bold bg-primary-600 hover:bg-primary-500 text-white transition-colors">
@@ -414,6 +507,90 @@ export default function AdminPage() {
           </div>
         )}
       </AnimatePresence>
+
+      {/* Category Modal */}
+      <AnimatePresence>
+        {isCategoryModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-3xl shadow-2xl w-full max-w-xl my-8 relative flex flex-col"
+            >
+              <div className="p-6 border-b border-gray-200 flex items-center justify-between bg-white rounded-t-3xl">
+                <h2 className="text-2xl font-heading font-bold text-[#111]">
+                  {editingCategoryId ? 'Edit Category' : 'Add New Category'}
+                </h2>
+                <button onClick={() => setIsCategoryModalOpen(false)} className="p-2 text-gray-500 hover:bg-gray-100 rounded-full transition-colors">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <form id="category-form" onSubmit={handleCategorySubmit} className="p-6 space-y-6">
+                 <div>
+                    <label className="block text-sm font-bold text-[#111] mb-1">Category Name *</label>
+                    <input required value={categoryName} onChange={(e) => setCategoryName(e.target.value)} type="text" className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-primary-500 text-[#111]" />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-bold text-[#111] mb-2">Category Image *</label>
+                    <div className="flex gap-4 mb-4">
+                      <label className="flex items-center gap-2 text-sm cursor-pointer font-bold text-gray-700">
+                        <input type="radio" value="url" checked={categoryImageMode === 'url'} onChange={() => setCategoryImageMode('url')} className="text-primary-600 focus:ring-primary-500" />
+                        Image URL
+                      </label>
+                      <label className="flex items-center gap-2 text-sm cursor-pointer font-bold text-gray-700">
+                        <input type="radio" value="upload" checked={categoryImageMode === 'upload'} onChange={() => setCategoryImageMode('upload')} className="text-primary-600 focus:ring-primary-500" />
+                        Upload File (Base64)
+                      </label>
+                    </div>
+
+                    {categoryImageMode === 'url' ? (
+                       <input 
+                         required 
+                         type="url" 
+                         value={categoryImageUrl} 
+                         onChange={(e) => setCategoryImageUrl(e.target.value)} 
+                         placeholder="https://images.unsplash.com/photo-..." 
+                         className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-primary-500 text-[#111] mb-4" 
+                       />
+                    ) : (
+                      <div className="mb-4">
+                        <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-xl bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors">
+                          <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                            <UploadCloud className="w-8 h-8 text-gray-400 mb-2" />
+                            <p className="text-sm text-gray-500 font-bold">Click to upload image</p>
+                            <p className="text-xs text-gray-400 mt-1">PNG, JPG, WEBP (Max 2MB)</p>
+                          </div>
+                          <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, setCategoryImageUrl)} className="hidden" />
+                        </label>
+                      </div>
+                    )}
+
+                    {categoryImageUrl && (
+                      <div className="mt-2 bg-gray-50 p-2 rounded-xl inline-block border border-gray-200">
+                        <div className="w-24 h-24 rounded-lg overflow-hidden relative">
+                           <img src={categoryImageUrl} alt="Preview" className="w-full h-full object-cover bg-white" onError={(e) => { (e.target as HTMLImageElement).src = '/images/fallback.svg'; }} />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+              </form>
+
+              <div className="p-6 border-t border-gray-200 flex justify-end gap-4 bg-white rounded-b-3xl">
+                <button type="button" onClick={() => setIsCategoryModalOpen(false)} className="px-6 py-2.5 rounded-xl font-bold text-gray-600 hover:bg-gray-100 transition-colors">
+                  Cancel
+                </button>
+                <button form="category-form" type="submit" className="px-6 py-2.5 rounded-xl font-bold bg-primary-600 hover:bg-primary-500 text-white transition-colors">
+                  Save Category
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
     </div>
   );
 }

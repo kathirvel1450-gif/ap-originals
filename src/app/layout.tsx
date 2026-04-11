@@ -33,7 +33,7 @@ export default function RootLayout({
       lang="en"
       className={`${inter.variable} ${outfit.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col font-sans transition-colors duration-300">
+      <body className="min-h-full flex flex-col font-sans transition-colors duration-300 bg-[#111] text-[#fff]">
         <ToastProvider>
           <StoreProvider>
             <Navbar />
