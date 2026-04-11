@@ -135,28 +135,39 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const safeSetItem = (key: string, value: string) => {
+    try {
+      localStorage.setItem(key, value);
+    } catch (e) {
+      console.error(`Failed to save ${key} to localStorage`, e);
+      if (e instanceof DOMException && (e.name === 'QuotaExceededError' || e.name === 'NotAllowedError')) {
+        alert("Storage limit exceeded! Please use Image URLs instead of uploading large files.");
+      }
+    }
+  };
+
   useEffect(() => {
     if (!isLoadingData) {
-      localStorage.setItem('ap-products', JSON.stringify(products));
+      safeSetItem('ap-products', JSON.stringify(products));
     }
   }, [products, isLoadingData]);
 
   useEffect(() => {
     if (!isLoadingData) {
-      localStorage.setItem('categories', JSON.stringify(categories));
+      safeSetItem('categories', JSON.stringify(categories));
     }
   }, [categories, isLoadingData]);
 
   useEffect(() => {
     if (!isLoadingData) {
-      localStorage.setItem('users', JSON.stringify(users));
+      safeSetItem('users', JSON.stringify(users));
     }
   }, [users, isLoadingData]);
 
   useEffect(() => {
     if (!isLoadingData) {
       if (currentUser) {
-        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+        safeSetItem('currentUser', JSON.stringify(currentUser));
       } else {
         localStorage.removeItem('currentUser');
       }
@@ -165,14 +176,14 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!isLoadingData) {
-      localStorage.setItem('ap-settings', JSON.stringify(storeSettings));
+      safeSetItem('ap-settings', JSON.stringify(storeSettings));
     }
   }, [storeSettings, isLoadingData]);
 
   useEffect(() => {
     if (!isLoadingData) {
       if (isAdmin) {
-        localStorage.setItem('ap-admin-auth', 'true');
+        safeSetItem('ap-admin-auth', 'true');
       } else {
         localStorage.removeItem('ap-admin-auth');
       }

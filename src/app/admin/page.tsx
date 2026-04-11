@@ -58,8 +58,8 @@ export default function AdminPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 2 * 1024 * 1024) {
-      addToast("Image size should be less than 2MB for LocalStorage", "error");
+    if (file.size > 1 * 1024 * 1024) {
+      addToast("Image too large. Use image URL instead", "error");
       return;
     }
 
@@ -454,7 +454,7 @@ export default function AdminPage() {
                     <div className="flex gap-4 mb-4">
                       <label className="flex items-center gap-2 text-sm cursor-pointer font-bold text-gray-700">
                         <input type="radio" value="url" checked={productImageMode === 'url'} onChange={() => setProductImageMode('url')} className="text-primary-600 focus:ring-primary-500" />
-                        Image URL
+                        Image URL (Recommended)
                       </label>
                       <label className="flex items-center gap-2 text-sm cursor-pointer font-bold text-gray-700">
                         <input type="radio" value="upload" checked={productImageMode === 'upload'} onChange={() => setProductImageMode('upload')} className="text-primary-600 focus:ring-primary-500" />
@@ -477,7 +477,7 @@ export default function AdminPage() {
                           <div className="flex flex-col items-center justify-center pt-5 pb-6">
                             <UploadCloud className="w-8 h-8 text-gray-400 mb-2" />
                             <p className="text-sm text-gray-500 font-bold">Click to upload image</p>
-                            <p className="text-xs text-gray-400 mt-1">PNG, JPG, WEBP (Max 2MB)</p>
+                            <p className="text-xs text-gray-400 mt-1">PNG, JPG, WEBP (Max 1MB)</p>
                           </div>
                           <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, setProductImageUrl)} className="hidden" />
                         </label>
@@ -538,7 +538,7 @@ export default function AdminPage() {
                     <div className="flex gap-4 mb-4">
                       <label className="flex items-center gap-2 text-sm cursor-pointer font-bold text-gray-700">
                         <input type="radio" value="url" checked={categoryImageMode === 'url'} onChange={() => setCategoryImageMode('url')} className="text-primary-600 focus:ring-primary-500" />
-                        Image URL
+                        Image URL (Recommended)
                       </label>
                       <label className="flex items-center gap-2 text-sm cursor-pointer font-bold text-gray-700">
                         <input type="radio" value="upload" checked={categoryImageMode === 'upload'} onChange={() => setCategoryImageMode('upload')} className="text-primary-600 focus:ring-primary-500" />
@@ -561,7 +561,7 @@ export default function AdminPage() {
                           <div className="flex flex-col items-center justify-center pt-5 pb-6">
                             <UploadCloud className="w-8 h-8 text-gray-400 mb-2" />
                             <p className="text-sm text-gray-500 font-bold">Click to upload image</p>
-                            <p className="text-xs text-gray-400 mt-1">PNG, JPG, WEBP (Max 2MB)</p>
+                            <p className="text-xs text-gray-400 mt-1">PNG, JPG, WEBP (Max 1MB)</p>
                           </div>
                           <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, setCategoryImageUrl)} className="hidden" />
                         </label>
