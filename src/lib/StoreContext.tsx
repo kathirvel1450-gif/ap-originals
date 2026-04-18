@@ -1,10 +1,13 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Product, seedProducts, Category, seedCategories } from './data';
+import { collection, doc, onSnapshot, setDoc, updateDoc, deleteDoc, query, orderBy } from 'firebase/firestore';
+import { db } from './firebase';
+import { Product, seedProducts, Category, seedCategories, StoreSettings, Order, OrderItem } from './data';
 
 export type UserData = {
   mobile: string;
+  name?: string;
   createdAt: number;
 };
 
@@ -13,20 +16,13 @@ type CartItem = {
   quantity: number;
 };
 
-type StoreSettings = {
-  appName: string;
-  appTagline: string;
-};
-
 type StoreContextType = {
   products: Product[];
-  setProducts: React.Dispatch<React.SetStateAction<Product[]>>;
   addProduct: (product: Product) => void;
   editProduct: (product: Product) => void;
   deleteProduct: (id: string) => void;
 
   categories: Category[];
-  setCategories: React.Dispatch<React.SetStateAction<Category[]>>;
   addCategory: (category: Category) => void;
   editCategory: (category: Category) => void;
   deleteCategory: (id: string) => void;
@@ -35,6 +31,10 @@ type StoreContextType = {
   currentUser: UserData | null;
   registerUser: (mobile: string) => void;
   loginUser: (mobile: string) => void;
+
+  orders: Order[];
+  addOrder: (order: Order) => void;
+  updateOrderStatus: (id: string, status: Order['status'], deliveryDate?: string) => void;
 
   isLoadingData: boolean;
 
@@ -49,7 +49,7 @@ type StoreContextType = {
   wishlist: string[];
   toggleWishlist: (productId: string) => void;
 
-  user: any | null; // Kept for legacy compatibility if needed
+  user: any | null; 
   login: (mobileNumber: string) => void;
   logout: () => void;
 
@@ -67,128 +67,124 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [users, setUsers] = useState<UserData[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [currentUser, setCurrentUser] = useState<UserData | null>(null);
+  
   const [isLoadingData, setIsLoadingData] = useState(true);
   
   const [storeSettings, setStoreSettings] = useState<StoreSettings>({
     appName: 'AP originals',
-    appTagline: 'Premium quality organic grocery & pure cold-pressed oils. Bringing the traditional purity back to your kitchen.'
+    appTagline: 'Premium quality organic grocery & pure cold-pressed oils. Bringing the traditional purity back to your kitchen.',
+    address: '123 Organic Lane, Chennai, India',
+    phone: '+91 9876543210',
+    email: 'contact@aporiginals.com',
+    deliveryFee: 50,
+    tax: 5
   });
+
   const [isAdmin, setIsAdmin] = useState(false);
-  
   const [cart, setCart] = useState<CartItem[]>([]);
   const [wishlist, setWishlist] = useState<string[]>([]);
   const [user, setUser] = useState<any | null>(null);
 
-  // Initialize from sessionStorage/localStorage to prevent hydration errors
+  // Firestore onSnapshot listeners
+  useEffect(() => {
+    let unsubs: any[] = [];
+    
+    try {
+      // 1. Categories
+      const unsubCategories = onSnapshot(collection(db, 'categories'), (snapshot) => {
+        const catsData: Category[] = [];
+        snapshot.forEach((doc) => {
+          catsData.push({ id: doc.id, ...doc.data() } as Category);
+        });
+        setCategories(catsData);
+      });
+      unsubs.push(unsubCategories);
+
+      // 2. Products
+      const unsubProducts = onSnapshot(collection(db, 'products'), (snapshot) => {
+        const prodsData: Product[] = [];
+        snapshot.forEach((doc) => {
+          prodsData.push({ id: doc.id, ...doc.data() } as Product);
+        });
+        setProducts(prodsData);
+      });
+      unsubs.push(unsubProducts);
+
+      // 3. Settings
+      const unsubSettings = onSnapshot(doc(db, 'storeSettings', 'global'), (docSnap) => {
+        if (docSnap.exists()) {
+          setStoreSettings(docSnap.data() as StoreSettings);
+        }
+      });
+      unsubs.push(unsubSettings);
+
+      // 4. Users
+      const unsubUsers = onSnapshot(collection(db, 'users'), (snapshot) => {
+        const usersData: UserData[] = [];
+        snapshot.forEach((doc) => {
+          usersData.push(doc.data() as UserData);
+        });
+        setUsers(usersData);
+      });
+      unsubs.push(unsubUsers);
+
+      // 5. Orders
+      const unsubOrders = onSnapshot(query(collection(db, 'orders'), orderBy('createdAt', 'desc')), (snapshot) => {
+        const ordersData: Order[] = [];
+        snapshot.forEach((doc) => {
+          ordersData.push({ id: doc.id, ...doc.data() } as Order);
+        });
+        setOrders(ordersData);
+      });
+      unsubs.push(unsubOrders);
+
+    } catch (error) {
+      console.error("Firestore Subscribe Error:", error);
+    }
+
+    setIsLoadingData(false);
+
+    return () => {
+      unsubs.forEach(unsub => unsub());
+    };
+  }, []);
+
+  // Local storage syncing for session continuity (Cart, Wishlist, CurrentUser, AdminSession)
   useEffect(() => {
     try {
-      const savedProducts = localStorage.getItem('ap-products');
-      if (savedProducts) {
-        const parsed = JSON.parse(savedProducts);
-        if (parsed && parsed.length > 0) {
-          setProducts(parsed);
-        } else {
-          setProducts(seedProducts);
-          localStorage.setItem('ap-products', JSON.stringify(seedProducts));
-        }
-      } else {
-        setProducts(seedProducts);
-        localStorage.setItem('ap-products', JSON.stringify(seedProducts));
-      }
-
-      const savedCategories = localStorage.getItem('categories');
-      if (savedCategories) {
-        setCategories(JSON.parse(savedCategories));
-      } else {
-        setCategories(seedCategories);
-        localStorage.setItem('categories', JSON.stringify(seedCategories));
-      }
-
-      const savedUsers = localStorage.getItem('users');
-      if (savedUsers) setUsers(JSON.parse(savedUsers));
+      const savedAdmin = localStorage.getItem('ap-admin-auth');
+      if (savedAdmin === 'true') setIsAdmin(true);
 
       const savedCurrentUser = localStorage.getItem('currentUser');
       if (savedCurrentUser) setCurrentUser(JSON.parse(savedCurrentUser));
 
-      const savedSettings = localStorage.getItem('ap-settings');
-      if (savedSettings) {
-        setStoreSettings(JSON.parse(savedSettings));
-      }
-
-      const savedAdmin = localStorage.getItem('ap-admin-auth');
-      if (savedAdmin === 'true') {
-        setIsAdmin(true);
-      }
-      
       const savedCart = sessionStorage.getItem('ap-cart');
-      const savedWishlist = sessionStorage.getItem('ap-wishlist');
-      const savedUser = sessionStorage.getItem('ap-user');
       if (savedCart) setCart(JSON.parse(savedCart));
+
+      const savedWishlist = sessionStorage.getItem('ap-wishlist');
       if (savedWishlist) setWishlist(JSON.parse(savedWishlist));
-      if (savedUser) setUser(JSON.parse(savedUser));
     } catch (e) {
-      console.warn("Storage access failed", e);
-      setProducts(seedProducts);
-    } finally {
-      setIsLoadingData(false);
+      console.warn("Local storage parse failed", e);
     }
   }, []);
 
-  const safeSetItem = (key: string, value: string) => {
-    try {
-      localStorage.setItem(key, value);
-    } catch (e) {
-      console.error(`Failed to save ${key} to localStorage`, e);
-      if (e instanceof DOMException && (e.name === 'QuotaExceededError' || e.name === 'NotAllowedError')) {
-        alert("Storage limit exceeded! Please use Image URLs instead of uploading large files.");
-      }
+  useEffect(() => {
+    if (currentUser) {
+      localStorage.setItem('currentUser', JSON.stringify(currentUser));
+    } else {
+      localStorage.removeItem('currentUser');
     }
-  };
+  }, [currentUser]);
 
   useEffect(() => {
-    if (!isLoadingData) {
-      safeSetItem('ap-products', JSON.stringify(products));
+    if (isAdmin) {
+      localStorage.setItem('ap-admin-auth', 'true');
+    } else {
+      localStorage.removeItem('ap-admin-auth');
     }
-  }, [products, isLoadingData]);
-
-  useEffect(() => {
-    if (!isLoadingData) {
-      safeSetItem('categories', JSON.stringify(categories));
-    }
-  }, [categories, isLoadingData]);
-
-  useEffect(() => {
-    if (!isLoadingData) {
-      safeSetItem('users', JSON.stringify(users));
-    }
-  }, [users, isLoadingData]);
-
-  useEffect(() => {
-    if (!isLoadingData) {
-      if (currentUser) {
-        safeSetItem('currentUser', JSON.stringify(currentUser));
-      } else {
-        localStorage.removeItem('currentUser');
-      }
-    }
-  }, [currentUser, isLoadingData]);
-
-  useEffect(() => {
-    if (!isLoadingData) {
-      safeSetItem('ap-settings', JSON.stringify(storeSettings));
-    }
-  }, [storeSettings, isLoadingData]);
-
-  useEffect(() => {
-    if (!isLoadingData) {
-      if (isAdmin) {
-        safeSetItem('ap-admin-auth', 'true');
-      } else {
-        localStorage.removeItem('ap-admin-auth');
-      }
-    }
-  }, [isAdmin, isLoadingData]);
+  }, [isAdmin]);
 
   useEffect(() => {
     sessionStorage.setItem('ap-cart', JSON.stringify(cart));
@@ -198,22 +194,60 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     sessionStorage.setItem('ap-wishlist', JSON.stringify(wishlist));
   }, [wishlist]);
 
-  useEffect(() => {
-    sessionStorage.setItem('ap-user', JSON.stringify(user));
-  }, [user]);
+  // Firestore Methods
+  const addCategory = async (category: Category) => {
+    if(!category.id) category.id = `c_${Date.now()}`;
+    await setDoc(doc(db, 'categories', category.id), category);
+  };
+  const editCategory = async (category: Category) => {
+    await updateDoc(doc(db, 'categories', category.id), { ...category });
+  };
+  const deleteCategory = async (id: string) => {
+    await deleteDoc(doc(db, 'categories', id));
+  };
 
-  // Admin Actions
-  const updateStoreSettings = (settings: StoreSettings) => setStoreSettings(settings);
+  const addProduct = async (product: Product) => {
+    if(!product.id) product.id = `p_${Date.now()}`;
+    await setDoc(doc(db, 'products', product.id), product);
+  };
+  const editProduct = async (product: Product) => {
+    await updateDoc(doc(db, 'products', product.id), { ...product });
+  };
+  const deleteProduct = async (id: string) => {
+    await deleteDoc(doc(db, 'products', id));
+  };
+
+  const updateStoreSettings = async (settings: StoreSettings) => {
+    await setDoc(doc(db, 'storeSettings', 'global'), settings);
+  };
+
+  const addOrder = async (order: Order) => {
+    if(!order.id) order.id = `ORD_${Date.now()}`;
+    await setDoc(doc(db, 'orders', order.id), order);
+  };
+  
+  const updateOrderStatus = async (id: string, status: Order['status'], deliveryDate?: string) => {
+    const updatePayload: any = { status };
+    if (deliveryDate !== undefined) updatePayload.deliveryDate = deliveryDate;
+    await updateDoc(doc(db, 'orders', id), updatePayload);
+  };
+
+  const registerUser = async (mobile: string) => {
+    const newUser = { mobile, createdAt: Date.now() };
+    await setDoc(doc(db, 'users', mobile), newUser);
+    setCurrentUser(newUser);
+  };
+
+  const loginUser = (mobile: string) => {
+    const existing = users.find(u => u.mobile === mobile);
+    if (existing) {
+      setCurrentUser(existing);
+    }
+  };
+
+  // Local/Session methods
   const adminLogin = () => setIsAdmin(true);
   const adminLogout = () => setIsAdmin(false);
-
-  const addProduct = (product: Product) => setProducts(prev => [...prev, product]);
-  const editProduct = (product: Product) => setProducts(prev => prev.map(p => p.id === product.id ? product : p));
-  const deleteProduct = (id: string) => setProducts(prev => prev.filter(p => p.id !== id));
-
-  const addCategory = (category: Category) => setCategories(prev => [...prev, category]);
-  const editCategory = (category: Category) => setCategories(prev => prev.map(c => c.id === category.id ? category : c));
-  const deleteCategory = (id: string) => setCategories(prev => prev.filter(c => c.id !== id));
 
   const addToCart = (product: Product, quantity = 1) => {
     setCart((prev) => {
@@ -258,20 +292,6 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const login = (mobileNumber: string) => {
     setUser({ mobile: mobileNumber, name: "Guest User" });
   };
-
-  const registerUser = (mobile: string) => {
-    const newUser = { mobile, createdAt: Date.now() };
-    setUsers(prev => [...prev, newUser]);
-    setCurrentUser(newUser);
-  };
-
-  const loginUser = (mobile: string) => {
-    const existing = users.find(u => u.mobile === mobile);
-    if (existing) {
-      setCurrentUser(existing);
-    }
-  };
-
   const logout = () => {
     setUser(null);
     setCurrentUser(null);
@@ -293,12 +313,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     <StoreContext.Provider
       value={{
         products,
-        setProducts,
         addProduct,
         editProduct,
         deleteProduct,
         categories,
-        setCategories,
         addCategory,
         editCategory,
         deleteCategory,
@@ -306,6 +324,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         currentUser,
         registerUser,
         loginUser,
+        orders,
+        addOrder,
+        updateOrderStatus,
         isLoadingData,
         cart,
         addToCart,
@@ -338,4 +359,3 @@ export function useStore() {
   }
   return context;
 }
-

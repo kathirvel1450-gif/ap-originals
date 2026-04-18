@@ -16,6 +16,35 @@ export type Product = {
   description: string;
 };
 
+export type StoreSettings = {
+  appName: string;
+  appTagline: string;
+  address: string;
+  phone: string;
+  email: string;
+  deliveryFee: number;
+  tax: number;
+};
+
+export type OrderItem = {
+  product: Product;
+  quantity: number;
+};
+
+export type Order = {
+  id: string;
+  userId: string;       // mobile number of user
+  products: OrderItem[];
+  subtotal: number;
+  tax: number;
+  deliveryFee: number;
+  totalPrice: number;
+  status: 'Pending' | 'Shipped' | 'Delivered';
+  createdAt: number;
+  deliveryDate?: string | number | null; 
+};
+
+
 export const seedCategories: Category[] = [
   { id: '1', name: 'Oils', image: '/images/categories/oils.jpg' },
   { id: '2', name: 'Flours', image: '/images/categories/flours.jpg' },

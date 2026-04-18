@@ -24,16 +24,24 @@ export default function Footer() {
             <p className="text-white text-base mb-6 leading-relaxed font-medium">
               {storeSettings.appTagline}
             </p>
-            <div className="flex items-center gap-4">
-              <a href="#" className="text-white hover:text-accent-400 transition-colors p-2 bg-[#222] rounded-full hover:bg-[#333]">
-                <Phone className="w-5 h-5" />
-              </a>
-              <a href="#" className="text-white hover:text-accent-400 transition-colors p-2 bg-[#222] rounded-full hover:bg-[#333]">
-                <Mail className="w-5 h-5" />
-              </a>
-              <a href="#" className="text-white hover:text-accent-400 transition-colors p-2 bg-[#222] rounded-full hover:bg-[#333]">
-                <MapPin className="w-5 h-5" />
-              </a>
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center gap-4">
+                <a href={storeSettings.phone ? `tel:${storeSettings.phone}` : '#'} title={storeSettings.phone || 'Phone'} className="text-white hover:text-primary-500 transition-colors p-2 bg-[#222] rounded-full hover:bg-[#333]">
+                  <Phone className="w-5 h-5" />
+                </a>
+                <a href={storeSettings.email ? `mailto:${storeSettings.email}` : '#'} title={storeSettings.email || 'Email'} className="text-white hover:text-primary-500 transition-colors p-2 bg-[#222] rounded-full hover:bg-[#333]">
+                  <Mail className="w-5 h-5" />
+                </a>
+                <a href="#" className="text-white hover:text-primary-500 transition-colors p-2 bg-[#222] rounded-full hover:bg-[#333]">
+                  <MapPin className="w-5 h-5" />
+                </a>
+              </div>
+              {storeSettings.address && (
+                <div className="text-sm font-medium text-gray-400 mt-2 flex items-start gap-2 max-w-[200px]">
+                  <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0 text-primary-600" />
+                  <span>{storeSettings.address}</span>
+                </div>
+              )}
             </div>
           </div>
 
