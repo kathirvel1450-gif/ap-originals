@@ -6,15 +6,33 @@ import { useToast } from '@/lib/ToastContext';
 import { Product, Category, Order } from '@/lib/data';
 import { Plus, Edit2, Trash2, X, TrendingUp, Package, Link as LinkIcon, Download, MapPin, Truck } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useRouter } from 'next/navigation';
 
 export default function AdminPage() {
   const { 
     products, addProduct, editProduct, deleteProduct, 
     categories, addCategory, editCategory, deleteCategory,
     storeSettings, updateStoreSettings, adminLogout,
-    orders, updateOrderStatus
+    orders, updateOrderStatus, isAdmin, isLoadingData
   } = useStore();
   const { addToast } = useToast();
+  const router = useRouter();
+
+  // --- Auth Check ---
+  useEffect(() => {
+    if (!isLoadingData && !isAdmin) {
+      router.replace('/admin/login');
+    }
+  }, [isAdmin, isLoadingData, router]);
+
+  // Optionally halt rendering until validated
+  if (isLoadingData || !isAdmin) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#111]">
+         <div className="w-8 h-8 border-4 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
   // --- Metrics ---
   const totalOrders = orders.length;

@@ -3,7 +3,6 @@
 import { useStore } from '@/lib/StoreContext';
 import { useRouter, usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { Loader2 } from 'lucide-react';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { isAdmin, isLoadingData } = useStore();
@@ -13,10 +12,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   useEffect(() => {
     if (!isLoadingData) {
-      if (!isAdmin && pathname !== '/admin/login') {
-        router.push('/admin/login');
-      } else if (isAdmin && pathname === '/admin/login') {
-        router.push('/admin');
+      if (!isAdmin && !pathname.includes('/admin/login')) {
+        router.replace('/admin/login');
+      } else if (isAdmin && pathname.includes('/admin/login')) {
+        router.replace('/admin');
       } else {
         setIsReady(true);
       }
@@ -25,14 +24,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   if (!isReady || isLoadingData) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <Loader2 className="w-10 h-10 text-primary-600 animate-spin" />
+      <div className="min-h-screen flex items-center justify-center bg-[#111]">
+         <div className="w-8 h-8 border-4 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-[#111] flex flex-col">
       {children}
     </div>
   );
