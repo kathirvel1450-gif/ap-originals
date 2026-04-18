@@ -123,7 +123,7 @@ export default function AdminPage() {
     setPrice('');
     setDiscountPercentage('');
     setStockStatus('In Stock');
-    setProductCategory(categories[0]?.name || '');
+    setProductCategory('');
     setDescription('');
     setProductImageUrl('');
     setEditingProductId(null);
@@ -637,6 +637,9 @@ export default function AdminPage() {
                   <div>
                     <label className="block text-sm font-bold text-gray-300 mb-1">Category *</label>
                     <select required value={productCategory} onChange={(e) => setProductCategory(e.target.value)} className="w-full p-3 bg-[#000] border border-[#444] rounded-xl outline-none focus:ring-2 focus:ring-primary-500 text-white">
+                      <option value="" disabled className="text-gray-500">
+                        {categories.length === 0 ? "No categories available" : "Select a Category"}
+                      </option>
                       {categories.map(c => (
                         <option key={c.id} value={c.name} className="text-black">{c.name}</option>
                       ))}
