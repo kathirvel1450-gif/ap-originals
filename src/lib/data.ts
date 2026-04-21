@@ -14,6 +14,7 @@ export type Product = {
   rating: number;
   image: string;
   description: string;
+  isBestSeller?: boolean;
 };
 
 export type StoreSettings = {

@@ -11,9 +11,6 @@ import { motion } from 'framer-motion';
 export default function Home() {
   const { products, isLoadingData } = useStore();
   
-  // Optionally map the static bestSellers IDs to the dynamic objects
-  const bestSellerProducts = products.filter(p => bestSellers.includes(p.id)) || products.slice(0, 4);
-  
   return (
     <div className="flex flex-col flex-1 w-full relative bg-[#111] text-[#fff]">
       
@@ -97,26 +94,59 @@ export default function Home() {
       <CategoryShowcase />
 
       {/* Best Sellers Section */}
-      <section className="py-16 md:py-24 bg-[#111]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-2xl mx-auto mb-16">
+      <section className="py-16 md:py-24 bg-[#111] overflow-hidden">
+        <div className="w-full">
+          <div className="text-center max-w-2xl mx-auto mb-16 px-4">
             <h2 className="text-3xl md:text-4xl font-heading font-extrabold text-[#fff] mb-4">Our Best Sellers</h2>
             <p className="text-[#aaa] font-medium text-lg">Discover our most loved products, trusted by thousands of families for their daily wellness.</p>
           </div>
           
           {isLoadingData ? (
-             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 lg:gap-8">
+             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 lg:gap-8 max-w-7xl mx-auto px-4">
                 {[1,2,3,4].map(idx => (
                     <div key={idx} className="animate-pulse bg-[#222] rounded-2xl h-80 w-full"></div>
                 ))}
              </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 lg:gap-8">
-              {bestSellerProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
-          )}
+          ) : (() => {
+             const bestProductsFilter = products.filter(p => p.isBestSeller);
+             const renderProducts = bestProductsFilter.length > 0 ? bestProductsFilter : products.slice(0, 9);
+             
+             if (renderProducts.length === 0) {
+               return (
+                 <div className="text-center text-gray-500 font-bold max-w-7xl mx-auto px-4 py-8">
+                   No products available
+                 </div>
+               );
+             }
+
+             const row1 = renderProducts.slice(0, 3);
+             const row2 = renderProducts.slice(3, 6);
+             const row3 = renderProducts.slice(6, 9);
+
+             const renderCarouselRow = (items: typeof products, animationClass: string) => {
+               if (items.length === 0) return null;
+               const mappedItems = [...items, ...items, ...items, ...items, ...items, ...items];
+               return (
+                 <div className="relative w-full overflow-hidden mb-6 flex group pause-on-hover py-4">
+                   <div className={`flex gap-6 min-w-max ${animationClass}`}>
+                     {mappedItems.map((product, idx) => (
+                       <div key={`${product.id}-${idx}`} className="w-64 sm:w-72 md:w-80 flex-shrink-0 hover-3d">
+                          <ProductCard product={product} />
+                       </div>
+                     ))}
+                   </div>
+                 </div>
+               );
+             };
+
+             return (
+               <div className="w-full">
+                 {renderCarouselRow(row1, 'animate-scroll-left')}
+                 {renderCarouselRow(row2, 'animate-scroll-right')}
+                 {renderCarouselRow(row3, 'animate-scroll-left')}
+               </div>
+             );
+          })()}
 
           <div className="mt-12 text-center">
             <Link href="/shop" className="inline-flex items-center font-bold text-primary-500 hover:text-primary-400 transition-colors">
