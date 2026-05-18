@@ -4,9 +4,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useStore } from '@/lib/StoreContext';
 import { useToast } from '@/lib/ToastContext';
 import { Product, Category, Order } from '@/lib/data';
-import { Plus, Edit2, Trash2, X, TrendingUp, Package, Link as LinkIcon, Download, MapPin, Truck } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, TrendingUp, Package, Link as LinkIcon, Download, MapPin, Truck, Upload } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
+import { storage } from '@/lib/firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 export default function AdminPage() {
   const { 
@@ -73,12 +75,19 @@ export default function AdminPage() {
   const [productCategory, setProductCategory] = useState('');
   const [description, setDescription] = useState('');
   const [productImageUrl, setProductImageUrl] = useState('');
+  const [isBestSeller, setIsBestSeller] = useState(false);
+  const [productImageSource, setProductImageSource] = useState<'url' | 'upload'>('url');
+  const [productImageFile, setProductImageFile] = useState<File | null>(null);
+  const [isUploadingProductImg, setIsUploadingProductImg] = useState(false);
 
   // --- Category Form State ---
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
   const [categoryName, setCategoryName] = useState('');
   const [categoryImageUrl, setCategoryImageUrl] = useState('');
+  const [categoryImageSource, setCategoryImageSource] = useState<'url' | 'upload'>('url');
+  const [categoryImageFile, setCategoryImageFile] = useState<File | null>(null);
+  const [isUploadingCategoryImg, setIsUploadingCategoryImg] = useState(false);
 
   // --- Order Filter State ---
   const [orderStatusFilter, setOrderStatusFilter] = useState('All');
@@ -126,6 +135,9 @@ export default function AdminPage() {
     setProductCategory('');
     setDescription('');
     setProductImageUrl('');
+    setIsBestSeller(false);
+    setProductImageSource('url');
+    setProductImageFile(null);
     setEditingProductId(null);
   };
 
@@ -143,17 +155,36 @@ export default function AdminPage() {
     setProductCategory(p.category);
     setDescription(p.description);
     setProductImageUrl(p.image);
+    setIsBestSeller(!!p.isBestSeller);
+    setProductImageSource('url');
+    setProductImageFile(null);
     setIsProductModalOpen(true);
   };
 
   const handleProductSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!productName || !price || !productImageUrl || !productCategory) {
+    
+    let finalImageUrl = productImageUrl;
+    if (productImageSource === 'upload' && productImageFile) {
+      setIsUploadingProductImg(true);
+      try {
+        const fileRef = ref(storage, `products/${Date.now()}_${productImageFile.name}`);
+        await uploadBytes(fileRef, productImageFile);
+        finalImageUrl = await getDownloadURL(fileRef);
+      } catch (err) {
+        addToast('Failed to upload image', 'error');
+        setIsUploadingProductImg(false);
+        return;
+      }
+      setIsUploadingProductImg(false);
+    }
+
+    if (!productName || !price || !finalImageUrl || !productCategory) {
       addToast('Please fill all required fields', 'error');
       return;
     }
 
-    if (!validateUrl(productImageUrl)) return;
+    if (!validateUrl(finalImageUrl)) return;
 
     const newProduct: Product = {
       id: editingProductId || '',
@@ -163,8 +194,9 @@ export default function AdminPage() {
       stockStatus,
       category: productCategory,
       rating: editingProductId ? (products.find(p => p.id === editingProductId)?.rating || 5.0) : 5.0,
-      image: productImageUrl,
-      description
+      image: finalImageUrl,
+      description,
+      isBestSeller
     };
 
     try {
@@ -197,6 +229,8 @@ export default function AdminPage() {
   const resetCategoryForm = () => {
     setCategoryName('');
     setCategoryImageUrl('');
+    setCategoryImageSource('url');
+    setCategoryImageFile(null);
     setEditingCategoryId(null);
   };
 
@@ -209,22 +243,40 @@ export default function AdminPage() {
     setEditingCategoryId(c.id);
     setCategoryName(c.name);
     setCategoryImageUrl(c.image);
+    setCategoryImageSource('url');
+    setCategoryImageFile(null);
     setIsCategoryModalOpen(true);
   };
 
   const handleCategorySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!categoryName || !categoryImageUrl) {
+    
+    let finalImageUrl = categoryImageUrl;
+    if (categoryImageSource === 'upload' && categoryImageFile) {
+      setIsUploadingCategoryImg(true);
+      try {
+        const fileRef = ref(storage, `categories/${Date.now()}_${categoryImageFile.name}`);
+        await uploadBytes(fileRef, categoryImageFile);
+        finalImageUrl = await getDownloadURL(fileRef);
+      } catch (err) {
+        addToast('Failed to upload image', 'error');
+        setIsUploadingCategoryImg(false);
+        return;
+      }
+      setIsUploadingCategoryImg(false);
+    }
+
+    if (!categoryName || !finalImageUrl) {
       addToast('Please fill all required fields', 'error');
       return;
     }
 
-    if (!validateUrl(categoryImageUrl)) return;
+    if (!validateUrl(finalImageUrl)) return;
 
     const newCategory: Category = {
       id: editingCategoryId || '',
       name: categoryName,
-      image: categoryImageUrl
+      image: finalImageUrl
     };
 
     try {
@@ -660,35 +712,60 @@ export default function AdminPage() {
                     <textarea required value={description} onChange={(e) => setDescription(e.target.value)} rows={3} className="w-full p-3 bg-[#000] border border-[#444] rounded-xl outline-none focus:ring-2 focus:ring-primary-500 text-white"></textarea>
                   </div>
 
+                  <div className="md:col-span-2 flex items-center gap-2">
+                    <input type="checkbox" id="isBestSeller" checked={isBestSeller} onChange={(e) => setIsBestSeller(e.target.checked)} className="w-5 h-5 accent-primary-500 bg-[#000] border-[#444] rounded" />
+                    <label htmlFor="isBestSeller" className="text-sm font-bold text-gray-300 cursor-pointer">Mark as Best Seller</label>
+                  </div>
+
                   {/* Image Section */}
                   <div className="md:col-span-2">
                     <label className="block text-sm font-bold text-gray-300 mb-2">Product Image Format *</label>
                     
                     <div className="flex gap-4 mb-4">
-                      <label className="flex items-center gap-2 text-sm cursor-default font-bold text-primary-500">
+                      <label className={`flex items-center gap-2 text-sm cursor-pointer font-bold ${productImageSource === 'url' ? 'text-primary-500' : 'text-gray-500 hover:text-gray-300'}`}>
+                        <input type="radio" name="productImageSource" value="url" checked={productImageSource === 'url'} onChange={() => setProductImageSource('url')} className="hidden" />
                         <LinkIcon className="w-4 h-4" />
                         Direct Web URL
                       </label>
+                      <label className={`flex items-center gap-2 text-sm cursor-pointer font-bold ${productImageSource === 'upload' ? 'text-primary-500' : 'text-gray-500 hover:text-gray-300'}`}>
+                        <input type="radio" name="productImageSource" value="upload" checked={productImageSource === 'upload'} onChange={() => setProductImageSource('upload')} className="hidden" />
+                        <Upload className="w-4 h-4" />
+                        Upload to Firebase
+                      </label>
                     </div>
 
-                    <input 
-                      required 
-                      type="url" 
-                      value={productImageUrl} 
-                      onChange={(e) => {
-                         const val = e.target.value;
-                         if (val.startsWith('C:\\') || val.startsWith('file://')) {
-                            addToast('Local files are not supported. Use valid URL paths', 'error');
-                            setProductImageUrl('');
-                         } else {
-                            setProductImageUrl(val);
-                         }
-                      }} 
-                      placeholder="https://images.unsplash.com/photo-..." 
-                      className="w-full p-3 bg-[#000] border border-[#444] rounded-xl outline-none focus:ring-2 focus:ring-primary-500 text-white mb-4" 
-                    />
+                    {productImageSource === 'url' ? (
+                      <input 
+                        required 
+                        type="url" 
+                        value={productImageUrl} 
+                        onChange={(e) => {
+                           const val = e.target.value;
+                           if (val.startsWith('C:\\') || val.startsWith('file://')) {
+                              addToast('Local files are not supported. Use valid URL paths', 'error');
+                              setProductImageUrl('');
+                           } else {
+                              setProductImageUrl(val);
+                           }
+                        }} 
+                        placeholder="https://images.unsplash.com/photo-..." 
+                        className="w-full p-3 bg-[#000] border border-[#444] rounded-xl outline-none focus:ring-2 focus:ring-primary-500 text-white mb-4" 
+                      />
+                    ) : (
+                      <input 
+                        required 
+                        type="file" 
+                        accept="image/*"
+                        onChange={(e) => {
+                          if (e.target.files && e.target.files[0]) {
+                            setProductImageFile(e.target.files[0]);
+                          }
+                        }}
+                        className="w-full p-3 bg-[#000] border border-[#444] rounded-xl outline-none focus:ring-2 focus:ring-primary-500 text-white mb-4" 
+                      />
+                    )}
 
-                    {productImageUrl && (
+                    {productImageSource === 'url' && productImageUrl && (
                       <div className="mt-2 bg-[#000] p-2 rounded-xl inline-block border border-[#444]">
                         <div className="w-24 h-24 rounded-lg overflow-hidden relative">
                            <img src={productImageUrl} alt="Preview" className="w-full h-full object-cover bg-white" onError={(e) => { (e.target as HTMLImageElement).src = '/images/fallback.svg'; }} />
@@ -703,8 +780,8 @@ export default function AdminPage() {
                 <button type="button" onClick={() => setIsProductModalOpen(false)} className="px-6 py-2.5 rounded-xl font-bold text-gray-400 hover:bg-[#222] transition-colors">
                   Cancel
                 </button>
-                <button form="product-form" type="submit" className="px-6 py-2.5 rounded-xl font-bold bg-primary-600 hover:bg-primary-500 text-white transition-colors">
-                  Save Product to Firestore
+                <button form="product-form" type="submit" disabled={isUploadingProductImg} className="px-6 py-2.5 rounded-xl font-bold bg-primary-600 hover:bg-primary-500 text-white transition-colors disabled:opacity-50">
+                  {isUploadingProductImg ? 'Uploading...' : 'Save Product to Firestore'}
                 </button>
               </div>
             </motion.div>
@@ -740,30 +817,50 @@ export default function AdminPage() {
                   <div>
                     <label className="block text-sm font-bold text-gray-300 mb-2">Category Image *</label>
                     <div className="flex gap-4 mb-4">
-                      <label className="flex items-center gap-2 text-sm cursor-default font-bold text-primary-500">
+                      <label className={`flex items-center gap-2 text-sm cursor-pointer font-bold ${categoryImageSource === 'url' ? 'text-primary-500' : 'text-gray-500 hover:text-gray-300'}`}>
+                        <input type="radio" name="categoryImageSource" value="url" checked={categoryImageSource === 'url'} onChange={() => setCategoryImageSource('url')} className="hidden" />
                         <LinkIcon className="w-4 h-4" />
                         Direct Web URL
                       </label>
+                      <label className={`flex items-center gap-2 text-sm cursor-pointer font-bold ${categoryImageSource === 'upload' ? 'text-primary-500' : 'text-gray-500 hover:text-gray-300'}`}>
+                        <input type="radio" name="categoryImageSource" value="upload" checked={categoryImageSource === 'upload'} onChange={() => setCategoryImageSource('upload')} className="hidden" />
+                        <Upload className="w-4 h-4" />
+                        Upload to Firebase
+                      </label>
                     </div>
 
-                    <input 
-                      required 
-                      type="url" 
-                      value={categoryImageUrl} 
-                      onChange={(e) => {
-                         const val = e.target.value;
-                         if (val.startsWith('C:\\') || val.startsWith('file://')) {
-                            addToast('Local files are not supported. Use valid URL paths', 'error');
-                            setCategoryImageUrl('');
-                         } else {
-                            setCategoryImageUrl(val);
-                         }
-                      }} 
-                      placeholder="https://images.unsplash.com/photo-..." 
-                      className="w-full p-3 bg-[#000] border border-[#444] rounded-xl outline-none focus:ring-2 focus:ring-primary-500 text-white mb-4" 
-                    />
+                    {categoryImageSource === 'url' ? (
+                      <input 
+                        required 
+                        type="url" 
+                        value={categoryImageUrl} 
+                        onChange={(e) => {
+                           const val = e.target.value;
+                           if (val.startsWith('C:\\') || val.startsWith('file://')) {
+                              addToast('Local files are not supported. Use valid URL paths', 'error');
+                              setCategoryImageUrl('');
+                           } else {
+                              setCategoryImageUrl(val);
+                           }
+                        }} 
+                        placeholder="https://images.unsplash.com/photo-..." 
+                        className="w-full p-3 bg-[#000] border border-[#444] rounded-xl outline-none focus:ring-2 focus:ring-primary-500 text-white mb-4" 
+                      />
+                    ) : (
+                      <input 
+                        required 
+                        type="file" 
+                        accept="image/*"
+                        onChange={(e) => {
+                          if (e.target.files && e.target.files[0]) {
+                            setCategoryImageFile(e.target.files[0]);
+                          }
+                        }}
+                        className="w-full p-3 bg-[#000] border border-[#444] rounded-xl outline-none focus:ring-2 focus:ring-primary-500 text-white mb-4" 
+                      />
+                    )}
 
-                    {categoryImageUrl && (
+                    {categoryImageSource === 'url' && categoryImageUrl && (
                       <div className="mt-2 bg-[#000] p-2 rounded-xl inline-block border border-[#444]">
                         <div className="w-24 h-24 rounded-lg overflow-hidden relative">
                            <img src={categoryImageUrl} alt="Preview" className="w-full h-full object-cover bg-white" onError={(e) => { (e.target as HTMLImageElement).src = '/images/fallback.svg'; }} />
@@ -777,8 +874,8 @@ export default function AdminPage() {
                 <button type="button" onClick={() => setIsCategoryModalOpen(false)} className="px-6 py-2.5 rounded-xl font-bold text-gray-400 hover:bg-[#222] transition-colors">
                   Cancel
                 </button>
-                <button form="category-form" type="submit" className="px-6 py-2.5 rounded-xl font-bold bg-primary-600 hover:bg-primary-500 text-white transition-colors">
-                  Save to Firestore
+                <button form="category-form" type="submit" disabled={isUploadingCategoryImg} className="px-6 py-2.5 rounded-xl font-bold bg-primary-600 hover:bg-primary-500 text-white transition-colors disabled:opacity-50">
+                  {isUploadingCategoryImg ? 'Uploading...' : 'Save to Firestore'}
                 </button>
               </div>
             </motion.div>

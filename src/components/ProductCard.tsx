@@ -38,7 +38,7 @@ export default function ProductCard({ product }: { product: Product }) {
       viewport={{ once: true }}
       whileHover={{ y: -5 }}
       transition={{ duration: 0.3 }}
-      className="group bg-[#1a1a1a] rounded-2xl overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.5)] hover:shadow-[0_8px_30px_rgba(34,197,94,0.15)] border border-[#333] relative flex flex-col h-full transition-all duration-300"
+      className="group hover-3d bg-[#1a1a1a]/80 backdrop-blur-xl rounded-2xl overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.5)] hover:shadow-[0_0_40px_rgba(34,197,94,0.3)] border border-white/10 relative flex flex-col h-full transition-all duration-500"
     >
       {/* Discount Badge */}
       {product.discountPercentage && (

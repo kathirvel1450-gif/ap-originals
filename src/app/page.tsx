@@ -108,7 +108,7 @@ export default function Home() {
                 ))}
              </div>
           ) : (() => {
-             const bestProductsFilter = products.filter(p => p.isBestSeller);
+             const bestProductsFilter = products.filter(p => p.isBestSeller === true);
              const renderProducts = bestProductsFilter.length > 0 ? bestProductsFilter : products.slice(0, 9);
              
              if (renderProducts.length === 0) {
@@ -128,10 +128,12 @@ export default function Home() {
                const mappedItems = [...items, ...items, ...items, ...items, ...items, ...items];
                return (
                  <div className="relative w-full overflow-hidden mb-6 flex group pause-on-hover py-4">
-                   <div className={`flex gap-6 min-w-max ${animationClass}`}>
+                   <div className={`flex min-w-max ${animationClass}`}>
                      {mappedItems.map((product, idx) => (
-                       <div key={`${product.id}-${idx}`} className="w-64 sm:w-72 md:w-80 flex-shrink-0 hover-3d">
-                          <ProductCard product={product} />
+                       <div key={`${product.id}-${idx}`} className="w-64 sm:w-72 md:w-80 flex-shrink-0 pr-6">
+                         <div className="h-full hover-3d">
+                            <ProductCard product={product} />
+                         </div>
                        </div>
                      ))}
                    </div>
